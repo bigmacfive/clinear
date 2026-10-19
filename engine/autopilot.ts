@@ -237,7 +237,7 @@ export class Autopilot {
           this.save({
             ...config,
             runsUsed: config.runsUsed + 1,
-            lastMessage: `${decision.agent === "grok" ? "Grok" : "Codex"} picked up CL-${card.number}. Run ${config.runsUsed + 1} of ${config.runBudget}.`,
+            lastMessage: `${decision.agent === "grok" ? "Grok" : decision.agent === "cline" ? "Cline" : "Codex"} picked up CL-${card.number}. Run ${config.runsUsed + 1} of ${config.runBudget}.`,
           });
         } catch (e) {
           config = this.config(project.id);
