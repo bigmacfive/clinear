@@ -145,7 +145,7 @@ Cline SDK provider dependencies currently include upstream audit advisories in u
 
 ## Open source
 
-**[MIT licensed](LICENSE). Contributions are welcome—start with [CONTRIBUTING.md](CONTRIBUTING.md).** The workboard, adapters, approval flow, and persistence are Clinear code. Cline, Parallel, Composio, Tauri, and the local CLIs are upstream products with their own licenses and account requirements. Hosted research/model/auth services are not self-hosted by this repository.
+**[MIT licensed](LICENSE). Focused fixes and reproducible bug reports are welcome through GitHub issues and pull requests.** The workboard, adapters, approval flow, and persistence are Clinear code. Cline, Parallel, Composio, Tauri, and the local CLIs are upstream products with their own licenses and account requirements. Hosted research/model/auth services are not self-hosted by this repository.
 
 ## Visual credits
 
