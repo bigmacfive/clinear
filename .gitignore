@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-engine/
+src-tauri/target/
+src-tauri/resources/engine/
+.env
+.env.*
+!.env.example
+*.db*
+.DS_Store
+artifacts/
