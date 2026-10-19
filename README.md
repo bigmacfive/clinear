@@ -13,6 +13,10 @@ Clinear turns a GitHub issue into reviewed work—with your local AI team.<br />
 
 </div>
 
+[![Clinear's native macOS board showing the fresh submission workflow: implementation and evidence review in Review, verified publication in Done.](docs/submission/assets/clinear-board.png)](docs/submission/assets/clinear-board.png)
+
+<p align="center"><sub>Actual macOS app · fresh CL-005–008 submission run · click for the original 2940 × 1706 capture.<br />Cards organize work; dragging a card does not execute an agent.</sub></p>
+
 ---
 
 ## Less context copying. More finished work.
