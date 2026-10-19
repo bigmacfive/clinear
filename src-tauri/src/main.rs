@@ -77,9 +77,11 @@ async fn launch(app: tauri::AppHandle, state: Arc<Bridge>) -> Result<(), String>
         .map(PathBuf::from)
         .or_else(|| {
             [
-                format!("{home}/.proto/shims/node"),
+                format!("{home}/.local/bin/node"),
+                format!("{home}/.hermes/node/bin/node"),
                 "/opt/homebrew/bin/node".into(),
                 "/usr/local/bin/node".into(),
+                format!("{home}/.proto/shims/node"),
             ]
             .into_iter()
             .map(PathBuf::from)
