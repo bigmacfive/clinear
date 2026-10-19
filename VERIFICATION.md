@@ -18,6 +18,8 @@
 - Independently reran the demo worktree tests outside the agent: 4 passed, 0 failed; `git diff --check` passed.
 - Visually verified the final ObsidianUI-inspired purple theme in the packaged native app, original LobeHub SVGs, and disabled Hermes/OpenClaw/Kimi entries. Screenshot: `artifacts/clinear-obsidian-board.png` (local artifact).
 
+- Published the reviewed demo report through the native app, read it back from GitHub, and observed the card move to Done with “Published and verified.” A separate GitHub API read confirmed exactly one report comment: https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6276165490
+
 ## Limits
 
 Composio has an implemented session/OAuth/proxy and verified-publication path, but no Composio key was supplied, so **Composio live authentication and calls are not verified**. The GitHub CLI fallback is clearly labelled and is not sponsor integration evidence.

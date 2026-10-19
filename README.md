@@ -32,6 +32,8 @@ Public fixture: https://github.com/bigmacfive/clinear-dispatch-demo
 
 Issue: https://github.com/bigmacfive/clinear-dispatch-demo/issues/1
 
+Verified demo report: https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6276165490
+
 This is **intentional demo data**, not a real incident. The starting `npm test` fails because the queue picks the lowest priority.
 
 1. Connect the cloned fixture and import issue #1.
