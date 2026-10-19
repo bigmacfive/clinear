@@ -68,3 +68,11 @@ Connections now provides live Parallel and Composio checks. Parallel searches of
 - Pointer hit testing selects the next visible card by its vertical midpoint; an overlay line marks insertion without shifting card layout. Filtering preserves hidden cards and uses the visible next card as the insertion anchor.
 - TypeScript and 22 tests pass, including same-column reorder, cross-column insertion, stale anchor rejection without partial writes, persisted ordering read from a reopened store, and execution-state guards.
 - Release macOS bundle built and installed. Native app reconnected successfully. Additional same-column mouse verification was not completed because the user was actively changing the board and editing Connections; their interaction was left undisturbed.
+
+## Live API-key connections
+
+- Cline SDK verified in installed app using the saved Cline provider key and `anthropic/claude-sonnet-5.5`.
+- Existing Parallel account key saved locally; fixed keyed Search request to include required `search_queries` per current API. Installed app test returned 8 sources via API key (not anonymous MCP).
+- Created Clinear-specific Composio key after explicit approval, saved locally, and connected GitHub @bigmacfive using the existing `public_repo` / `read:user` auth config. Declined the default flow's additional private-repository/workflow/Codespaces scopes.
+- Installed app Composio test succeeded; live Composio proxy read demo issue #1. GitHub route saved as Composio. No new comment was posted during connection verification.
+- 23 tests pass and the release macOS bundle is installed. Keys remain outside the repository in the local secrets file.

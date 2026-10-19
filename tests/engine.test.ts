@@ -340,3 +340,26 @@ test("board reorder persists, supports cross-column insertion, and validates des
     await assert.rejects(service.dispatch('moveCard', { id: a.id, stage: 'Ready', beforeId: null }), /Stop the active/);
   } finally { close(); }
 });
+
+test('Parallel keyed search sends the required keyword query and parses sources', async () => {
+  const { service, close } = fixture();
+  const originalFetch = globalThis.fetch;
+  const previous = process.env.PARALLEL_API_KEY;
+  process.env.PARALLEL_API_KEY = 'test-parallel-key';
+  try {
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      assert.ok(body.search_queries.length > 0);
+      assert.ok(body.search_queries[0].trim().length > 0);
+      assert.equal(body.mode, 'fast');
+      return new Response(JSON.stringify({ results: [{ title: 'Node docs', url: 'https://nodejs.org/api/test.html', excerpts: ['Test runner'] }] }), { status: 200 });
+    };
+    const result = await service.integrations.verify('parallel');
+    assert.match(result.message, /1 sources · API key/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previous === undefined) delete process.env.PARALLEL_API_KEY;
+    else process.env.PARALLEL_API_KEY = previous;
+    close();
+  }
+});

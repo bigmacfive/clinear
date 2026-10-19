@@ -186,6 +186,7 @@ export class Integrations {
             0,
             12000,
           ),
+        search_queries: [objective.trim().split(/\s+/).slice(0, 8).join(" ") || "official developer documentation"],
         mode: "fast",
       }),
       signal: AbortSignal.timeout(45000),
