@@ -20,7 +20,7 @@ Cline provides configurable model-backed planning, readiness checks, and backlog
 | Implementation | Local Codex worktree; original failing test reproduced |
 | Verification | Final run: 4/4 tests and `git diff --check` passed |
 | Review | Grok inspected the diff and recorded output; it did not run tests independently |
-| Publication | Separate approval step; final Composio comment link will be recorded after confirmed readback |
+| Publication | [Published through Composio and read back successfully](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6278163935); CL-007 is Done |
 
 ## Demo provenance
 
@@ -30,7 +30,7 @@ The new sequence imports the issue through Composio (CL-005), attaches seven Par
 
 Codex first reproduced the failure, corrected the comparator, and added immutability and stable-tie tests. A test-task run used the failure marker when describing the **expected pre-fix failure**; Clinear conservatively blocked that run. Its record was retained. After feedback, a fresh verification run on the fixed worktree passed all four tests and `git diff --check` without modifying files.
 
-Grok receives actual diff and recorded command output in evidence-only mode. It does not independently execute tests. Publication remains a separate approval action. Code is left locally; no PR or merge is performed.
+Grok receives actual diff and recorded command output in evidence-only mode. It does not independently execute tests. After approval, Composio published the result and read it back successfully: [verified GitHub report](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6278163935). Code is left locally; no PR or merge is performed.
 
 The research-generated backlog scene belongs to a separate earlier discovery run and is labeled accordingly.
 

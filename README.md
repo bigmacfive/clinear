@@ -76,7 +76,7 @@ Keys can be set through `.env` during development or through the desktop setting
 
 [Public sample repository](https://github.com/bigmacfive/clinear-dispatch-demo) · [Bug report](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1) · [Submission run and provenance](docs/submission/README.md)
 
-The fresh submission run reproduced the bug, fixed priority ordering, and passed **4/4 tests** plus `git diff --check`. Grok reviewed the actual diff and recorded command output. See the submission record for the publication route and final evidence links.
+The fresh submission run reproduced the bug, fixed priority ordering, and passed **4/4 tests** plus `git diff --check`. Grok reviewed the actual diff and recorded command output. [The approved report was published through Composio and read back successfully](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6278163935). See the submission record for the full provenance.
 
 An [earlier published report](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6276165490) used the explicitly selected **GitHub CLI fallback**. It is a separate run and is **not evidence of Composio publication**.
 
