@@ -50,3 +50,13 @@ Connections now provides live Parallel and Composio checks. Parallel searches of
 - Native visual check with a 600px detail panel confirms toolbar/column headers no longer overlap and footer no longer wraps.
 - Final installed native app: dragged CL-003 Backlog → Ready, attempted Ready → Running (no move/no execution), then restored Ready → Backlog. Click after dragging did not open a detail panel; ordinary card click still opened it.
 - Final screenshot: `artifacts/board-responsive-fixed.png`. Full viewport matrix and sustained edge-scroll speed have not been manually measured.
+
+## Smooth pointer dragging
+
+- Added a pointer-following card preview, preserving the grab offset. Its transform updates once per animation frame without re-rendering the board for every pointer event.
+- Removed layout-changing column instructions; destination guidance is attached to the floating preview. The source retains its space.
+- Edge scrolling uses a quadratic speed curve and gradual acceleration. Hit testing repeats during scrolling and at release, including a stationary pointer.
+- Pointer cancellation, Escape, window blur and component cleanup remove the preview and listeners.
+- TypeScript and all 21 tests pass.
+- Removed the successful-move banner on user request; failed RPCs still surface through the existing error handler.
+- Release bundle compiled successfully. In the updated native app, the board reflected a user-driven CL-002 move from Review to Ready. Sustained drag frame rate has not been benchmarked.

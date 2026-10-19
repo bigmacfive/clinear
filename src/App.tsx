@@ -90,7 +90,6 @@ export default function App() {
   const drag = useBoardDrag((id, stage) => {
     void act("move", async () => {
       await rpc("updateCard", { id, patch: { stage } });
-      setNotice(`Issue moved to ${stage}`);
     });
   });
   selectedRef.current = selected;
@@ -537,9 +536,6 @@ export default function App() {
                     <Plus size={15} />
                   </button>
                 </div>
-                {drag.dragged && <div className="drop-hint">
-                  {dropReason(drag.dragged.stage, stage) || `Drop to move to ${stage}`}
-                </div>}
                 <div className="column-cards">
                   {cards
                     .filter((c) => c.stage === stage)
