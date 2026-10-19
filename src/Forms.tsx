@@ -1,3 +1,4 @@
+import { Select } from "./Controls";
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
@@ -142,7 +143,7 @@ export function IssueModal({
         <div className="form-grid">
           <div>
             <label className="field-label">Agent</label>
-            <select
+            <Select
               value={v.agent}
               onChange={(e) => setV({ ...v, agent: e.target.value as AgentId })}
             >
@@ -151,7 +152,7 @@ export function IssueModal({
                   {name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className="field-label">Human owner</label>
@@ -252,249 +253,6 @@ export function ImportModal({
           </button>
         </footer>
       </form>
-    </Modal>
-  );
-}
-export function SettingsModal({
-  data,
-  close,
-  busy,
-  save,
-  probe,
-  connect,
-}: {
-  data: Snapshot;
-  close: () => void;
-  busy: string[];
-  save: (v: any) => void;
-  probe: (id: AgentId) => void;
-  connect: () => void;
-}) {
-  const [paths, setPaths] = useState({
-    claudePath: data.agents[0]?.path || "",
-    codexPath: data.agents[1]?.path || "",
-    grokPath: data.agents[2]?.path || "",
-  });
-  const [checking, setChecking] = useState("");
-  const [connectionResult, setConnectionResult] = useState("");
-  const [secrets, setSecrets] = useState<Record<string, string>>({});
-  const [model, setModel] = useState(data.settings.model);
-  const [provider, setProvider] = useState(data.settings.provider);
-  const [githubTransport, setGithubTransport] = useState(
-    data.settings.githubTransport,
-  );
-  return (
-    <Modal title="Connections & settings" close={close} wide>
-      <div className="settings-content">
-        <div className="settings-section-title">
-          <Terminal size={16} />
-          <div>
-            <h3>Local teammates</h3>
-            <p>
-              Use your installed CLIs and their existing login. Test with a
-              real, read-only response.
-            </p>
-          </div>
-        </div>
-        {data.agents.map((a) => (
-          <div className="connection-row" key={a.id}>
-            <AgentIcon id={a.id} />
-            <div className="connection-main">
-              <strong>
-                {names[a.id]}
-                <span
-                  className={`flag ${a.auth === "verified" ? "succeeded" : ""}`}
-                >
-                  {a.auth === "verified"
-                    ? "Verified"
-                    : a.installed
-                      ? "Installed · unverified"
-                      : "Not found"}
-                </span>
-              </strong>
-              <input
-                aria-label={`${names[a.id]} executable`}
-                value={paths[`${a.id}Path`]}
-                onChange={(e) =>
-                  setPaths({ ...paths, [`${a.id}Path`]: e.target.value })
-                }
-              />
-              {a.auth === "failed" && (
-                <small className="inline-error">{a.detail}</small>
-              )}
-            </div>
-            <button
-              className="secondary compact"
-              disabled={!a.installed || busy.includes(`probe-${a.id}`)}
-              onClick={() => probe(a.id)}
-            >
-              {busy.includes(`probe-${a.id}`) ? (
-                <Loader2 size={13} className="spin" />
-              ) : (
-                <Play size={12} />
-              )}
-              Test
-            </button>
-          </div>
-        ))}
-        <div className="upcoming-settings-title">More teammates, soon <span>Not yet available</span></div>
-        {upcomingAgents.map((agent) => <UpcomingAgent key={agent.id} agent={agent} variant="connection" />)}
-        <div className="settings-section-title integrations-title">
-          <Link2 size={16} />
-          <div>
-            <h3>The tools behind the work</h3>
-            <p>
-              Keys stay in the local engine. Saved credentials are never
-              returned to this interface.
-            </p>
-          </div>
-        </div>
-        {[
-          {
-            name: "Cline",
-            label:
-              provider === "local-codex"
-                ? "Cline SDK · local Codex inference"
-                : "Planning & orchestration",
-            key: provider === "cline" ? "CLINE_API_KEY" : "ANTHROPIC_API_KEY",
-            ready: data.integrations.cline,
-          },
-          {
-            name: "Parallel",
-            label: "Research · free MCP or API key",
-            key: "PARALLEL_API_KEY",
-            ready: data.integrations.parallel,
-          },
-          {
-            name: "Composio",
-            label: "GitHub authentication & actions",
-            key: "COMPOSIO_API_KEY",
-            ready: data.integrations.composio,
-          },
-        ].map((i) => (
-          <div className="integration-row" key={i.name}>
-            <div>
-              <strong>
-                {i.name === "Cline" && <AgentIcon id="cline" small />}
-                {i.name}
-                <span className={`live-dot ${i.ready ? "on" : ""}`} />
-              </strong>
-              <small>{i.label}</small>
-            </div>
-            <input
-              type="password"
-              aria-label={i.key}
-              autoComplete="off"
-              disabled={i.name === "Cline" && provider === "local-codex"}
-              placeholder={
-                i.name === "Cline" && provider === "local-codex"
-                  ? "Using existing Codex login"
-                  : i.ready
-                    ? "Key configured · enter to replace"
-                    : i.key
-              }
-              value={secrets[i.key] || ""}
-              onChange={(e) =>
-                setSecrets({ ...secrets, [i.key]: e.target.value })
-              }
-            />
-          </div>
-        ))}
-        <div className="github-connection">
-          <button className="secondary" onClick={() => void openExternal("https://dashboard.composio.dev")}>
-            Composio account & API key <ArrowUpRight size={14} />
-          </button>
-          {(["parallel", "composio"] as const).map((id) => (
-            <button key={id} className="secondary" disabled={!desktop || !!checking || (id === "composio" && !data.integrations.composio)} onClick={async () => {
-              setChecking(id); setConnectionResult("");
-              try {
-                const result = await rpc<{ message: string }>("verifyIntegration", { provider: id });
-                setConnectionResult(result.message);
-              } catch { setConnectionResult(`${id === "parallel" ? "Parallel" : "Composio"} verification failed. Save your key and complete account authorization, then retry.`); }
-              finally { setChecking(""); }
-            }}>
-              {checking === id ? "Testing…" : `Test ${id === "parallel" ? "Parallel" : "Composio"}`}
-            </button>
-          ))}
-        </div>
-        <p className="settings-footnote" role="status">{connectionResult || "Parallel public MCP needs no key. Composio: save API key → Connect GitHub → Test Composio → select Composio route and save."}</p>
-        <div className="form-grid">
-          <div>
-            <label className="field-label">Cline model provider</label>
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value)}
-            >
-              <option value="local-codex">Cline + local Codex login</option>
-              <option value="anthropic">Anthropic API</option>
-              <option value="cline">Cline</option>
-            </select>
-          </div>
-          <div>
-            <label className="field-label">Model ID</label>
-            <input
-              disabled={provider === "local-codex"}
-              value={
-                provider === "local-codex"
-                  ? "Existing Codex default model"
-                  : model
-              }
-              onChange={(e) => setModel(e.target.value)}
-            />
-          </div>
-        </div>
-        <label className="field-label">GitHub connection route</label>
-        <select
-          value={githubTransport}
-          onChange={(e) =>
-            setGithubTransport(e.target.value as "gh" | "composio")
-          }
-        >
-          <option value="composio">Composio · connected account</option>
-          <option value="gh">
-            GitHub CLI · existing gh login (demo fallback)
-          </option>
-        </select>
-        <div className="github-connection">
-          <Github size={20} />
-          <div>
-            <strong>Connect your GitHub account</strong>
-            <small>
-              Authorize access through Composio’s secure connection page.
-            </small>
-          </div>
-          <button
-            className="secondary"
-            disabled={!data.integrations.composio || busy.includes("connect")}
-            onClick={connect}
-          >
-            Connect
-            <ArrowUpRight size={14} />
-          </button>
-        </div>
-        <p className="settings-footnote">
-          Runtime: {data.settings.nodePath || "Desktop app required"}
-          <br />
-          Credentials are stored in a local file readable only by your user. CLI
-          permissions still apply; worktrees are not security sandboxes.
-        </p>
-      </div>
-      <footer className="modal-footer">
-        <button className="secondary" onClick={close}>
-          Close
-        </button>
-        <button
-          className="primary"
-          disabled={busy.includes("settings") || !desktop}
-          onClick={() => {
-            save({ ...paths, model, provider, githubTransport, secrets });
-            setSecrets({});
-          }}
-        >
-          <Check size={15} />
-          Save settings
-        </button>
-      </footer>
     </Modal>
   );
 }

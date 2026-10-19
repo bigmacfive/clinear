@@ -106,7 +106,11 @@ export class Integrations {
       });
     return this.composioGithub(path, method, body);
   }
-  async composioGithub(path: string, method: "GET" | "POST" = "GET", body?: unknown) {
+  async composioGithub(
+    path: string,
+    method: "GET" | "POST" = "GET",
+    body?: unknown,
+  ) {
     const s = await this.session();
     const response = await s.proxyExecute(
       {
@@ -130,15 +134,35 @@ export class Integrations {
       );
     return response.data as any;
   }
-  async verify(provider: "parallel" | "composio") {
+  async verify(provider: "cline" | "parallel" | "composio") {
+    if (provider === "cline") {
+      const result = await this.generate(
+        'Return only the JSON object {"ok":true}.',
+        "Verify the connection. Do not use tools.",
+      );
+      z.object({ ok: z.literal(true) }).parse(result);
+      return {
+        message: `Cline SDK verified · ${this.settings().provider} · ${this.settings().model}`,
+      };
+    }
     if (provider === "parallel") {
-      const sources = await this.research("Node.js test runner official documentation");
+      const sources = await this.research(
+        "Node.js test runner official documentation",
+      );
       if (!sources.length) throw Error("Parallel returned no sources.");
-      return { message: `Parallel verified · ${sources.length} sources · ${process.env.PARALLEL_API_KEY ? "API key" : "public MCP"}`, url: sources[0].url };
+      return {
+        message: `Parallel verified · ${sources.length} sources · ${process.env.PARALLEL_API_KEY ? "API key" : "public MCP"}`,
+        url: sources[0].url,
+      };
     }
     // Never use the gh fallback to verify Composio authentication.
-    const account = z.object({ login: z.string().min(1) }).parse(await this.composioGithub("/user"));
-    return { message: `Composio verified · GitHub @${account.login}`, url: `https://github.com/${account.login}` };
+    const account = z
+      .object({ login: z.string().min(1) })
+      .parse(await this.composioGithub("/user"));
+    return {
+      message: `Composio verified · GitHub @${account.login}`,
+      url: `https://github.com/${account.login}`,
+    };
   }
   async issue(url: string) {
     const i = parseIssue(url);

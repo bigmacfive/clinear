@@ -31,3 +31,10 @@ Discovery runs only while the app is open. Worker execution pauses after restart
 ### Connection verification controls
 
 Connections now provides live Parallel and Composio checks. Parallel searches official Node.js test runner documentation through the configured API key or public MCP. Composio checks GitHub `/user` through its SDK proxy, even when the app's selected publishing route is the gh fallback. A unit test verifies fallback isolation and rejection of malformed account responses. Account login, project API key, and GitHub OAuth are still required for the first real Composio check; no successful Composio call is claimed yet.
+
+### Workspace UX refinement
+
+- Added shared custom comboboxes, text-field styling, sidebar/detail/dialog resizing, focused issue view, execution/event filters, diff file navigation, and card-scoped draft persistence with save-before-run/publish.
+- Native macOS inspection: actual two-card demo board, 480→600px pointer resize, focused Changes view and real repository diff. Browser inspection: settings sections, dropdown open/close, Escape preserving the parent dialog, keyboard model selection.
+- Build/typecheck and 19 backend regression tests passed. Exact 1024×768 / 1280×800 / 1440×900 viewport matrix and injected frontend save-failure scenarios have not yet been completed; no full accessibility conformance claim.
+- Cline API: real `@cline/agents` call using `anthropic/claude-sonnet-5.5` completed and returned the requested JSON. Key is held only in the local 0600 secrets file. Parallel public MCP was verified earlier; Composio OAuth remains pending.

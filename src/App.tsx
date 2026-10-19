@@ -1,3 +1,6 @@
+import { useCardDrafts } from "./useCardDrafts";
+import { SettingsModal } from "./SettingsModal";
+import { DetailPanel, ResizeHandle, useStoredWidth, Select } from "./Controls";
 import { AutopilotPanel } from "./AutopilotPanel";
 import { useEffect, useState, useRef } from "react";
 import {
@@ -40,12 +43,36 @@ import {
   type RunEvent,
   type Proposal,
 } from "./types";
-import { names, AgentIcon, StatusIcon, Modal, upcomingAgents, UpcomingAgent } from "./ui";
-import { ProjectModal, IssueModal, ImportModal, SettingsModal } from "./Forms";
+import {
+  names,
+  AgentIcon,
+  StatusIcon,
+  Modal,
+  upcomingAgents,
+  UpcomingAgent,
+} from "./ui";
+import { ProjectModal, IssueModal, ImportModal } from "./Forms";
 export default function App() {
+  const edits = useCardDrafts();
   const [data, setData] = useState<Snapshot>(blank);
   const [projectId, setProjectId] = useState("");
   const [selected, setSelected] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useStoredWidth(
+    "clinear-sidebar-width",
+    225,
+    180,
+    320,
+  );
+  const [agentsOpen, setAgentsOpen] = useState(
+    () => localStorage.getItem("clinear-agents-open") !== "false",
+  );
+  const [runFilter, setRunFilter] = useState("all");
+  const [eventFilter, setEventFilter] = useState("all");
+  const [wrapDiff, setWrapDiff] = useState(false);
+  const [diffState, setDiffState] = useState("loading");
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const followLogs = useRef(true);
   const [tab, setTab] = useState("Overview");
   const [search, setSearch] = useState("");
   const [agentFilter, setAgentFilter] = useState("all");
@@ -60,7 +87,11 @@ export default function App() {
   const selectedRef = useRef(selected);
   const pendingRef = useRef(new Set<string>());
   selectedRef.current = selected;
-  useEffect(() => { setSelected(""); setAgentFilter("all"); setSearch(""); }, [projectId]);
+  useEffect(() => {
+    setSelected("");
+    setAgentFilter("all");
+    setSearch("");
+  }, [projectId]);
   const update = (s: Snapshot) => {
     setData(s);
     setConnected(true);
@@ -107,18 +138,31 @@ export default function App() {
     if (!selected) return;
     let alive = true;
     void rpc<RunEvent[]>("events", { cardId: selected })
-      .then((value) => { if (alive) setEvents(value); })
+      .then((value) => {
+        if (alive) setEvents(value);
+      })
       .catch(() => {});
+    setDiffState("loading");
     void rpc<string>("diff", { id: selected })
-      .then((value) => { if (alive) setDiff(value); })
-      .catch(() => {});
-    return () => { alive = false; };
+      .then((value) => {
+        if (alive) {
+          setDiff(value);
+          setDiffState("ready");
+        }
+      })
+      .catch(() => {
+        if (alive) setDiffState("failed");
+      });
+    return () => {
+      alive = false;
+    };
   }, [selected, data.runs]);
   useEffect(() => {
     const fn = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setModal("");
-        setSelected("");
+        if (modal) setModal("");
+        else if (focused) setFocused(false);
+        else setSelected("");
       }
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
@@ -134,7 +178,11 @@ export default function App() {
     };
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
-  }, []);
+  }, [modal, focused]);
+  useEffect(() => {
+    if (tab === "Activity" && followLogs.current)
+      bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight });
+  }, [events, tab]);
   async function act<T = any>(
     key: string,
     fn: () => Promise<T>,
@@ -169,16 +217,35 @@ export default function App() {
   const latest = runs.at(-1);
   const running = data.runs.filter((r) => r.status === "running").length;
   const select = (c: Card) => {
+    bodyRef.current?.scrollTo({ top: 0 });
+    followLogs.current = true;
+    setRunFilter("all");
+    setEventFilter("all");
     setSelected(c.id);
     setTab("Overview");
   };
   const saveCard = (patch: Partial<Card>) =>
     act("save", () => rpc("updateCard", { id: selected, patch }));
-  const startCard = (c: Card) => act("run", () => rpc("run", { id: c.id }));
+  const startCard = (c: Card) =>
+    act("run", async () => {
+      await edits.flush(c.id);
+      return rpc("run", { id: c.id });
+    });
   const link = (url: string) => void act("link", () => openExternal(url));
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
+    <div
+      className={`app-shell ${focused && card ? "focus-mode" : ""}`}
+      style={{ "--sidebar-width": `${sidebarWidth}px` } as React.CSSProperties}
+    >
+      <aside className="sidebar" style={{ width: sidebarWidth }}>
+        <ResizeHandle
+          width={sidebarWidth}
+          setWidth={setSidebarWidth}
+          min={180}
+          max={320}
+          side="right"
+          label="Resize sidebar"
+        />
         <div className="traffic-space" data-tauri-drag-region />
         <button
           className="workspace-switch"
@@ -251,30 +318,37 @@ export default function App() {
             <Plus size={14} /> Connect a repository
           </button>
         )}
-        <div className="sidebar-section team-label">
-          <span>Agents</span>
-          <span className="mini-label">ON YOUR MAC</span>
-        </div>
-        {data.agents.map((a) => (
-          <button
-            className="agent-nav"
-            key={a.id}
-            onClick={() => setAgentFilter(agentFilter === a.id ? "all" : a.id)}
-          >
-            <AgentIcon id={a.id} small />
-            <span>
-              {names[a.id]}
-              {a.id === "claude" && (
-                <small className="optional-agent">optional</small>
-              )}
-            </span>
-            <span
-              className={`live-dot ${data.runs.some((r) => r.agent === a.id && r.status === "running") ? "working" : a.auth === "verified" ? "on" : ""}`}
-            />
-          </button>
-        ))}
-        <div className="upcoming-nav-label">Coming soon</div>
-        {upcomingAgents.map((agent) => <UpcomingAgent key={agent.id} agent={agent} variant="nav" />)}
+        <button
+          className="sidebar-section team-label"
+          aria-expanded={agentsOpen}
+          onClick={() => {
+            setAgentsOpen(!agentsOpen);
+            localStorage.setItem("clinear-agents-open", String(!agentsOpen));
+          }}
+        >
+          Agents <ChevronDown size={14} />
+        </button>
+        {agentsOpen &&
+          data.agents.map((a) => (
+            <button
+              className="agent-nav"
+              key={a.id}
+              onClick={() =>
+                setAgentFilter(agentFilter === a.id ? "all" : a.id)
+              }
+            >
+              <AgentIcon id={a.id} small />
+              <span>
+                {names[a.id]}
+                {a.id === "claude" && (
+                  <small className="optional-agent">optional</small>
+                )}
+              </span>
+              <span
+                className={`live-dot ${data.runs.some((r) => r.agent === a.id && r.status === "running") ? "working" : a.auth === "verified" ? "on" : ""}`}
+              />
+            </button>
+          ))}
         <div className="sidebar-bottom">
           <div className="local-box">
             <span className={`live-dot ${connected ? "on" : ""}`} />
@@ -325,67 +399,6 @@ export default function App() {
             </button>
           </div>
         </header>
-        <section className="workspace-heading">
-          <div>
-            <div className="eyebrow">HUMAN DIRECTION. AGENT EXECUTION.</div>
-            <h1>{project?.name || "Your team, expanded."}</h1>
-            <p>
-              {project
-                ? "One board for the work you do, and the work you delegate."
-                : "Bring your repository. Put your local agents to work."}
-            </p>
-          </div>
-          <button
-            className="primary"
-            onClick={() => setModal(project ? "new" : "project")}
-          >
-            <Plus size={16} />
-            {project ? "New issue" : "Connect repository"}
-            <kbd>N</kbd>
-          </button>
-        </section>
-        <section className="team-strip">
-          <div className="team-strip-label">
-            <span className="stacked-avatars">
-              <span className="avatar">Y</span>
-              <span className="avatar ai">✦</span>
-            </span>
-            <div>
-              <strong>Your extended team</strong>
-              <small>
-                {running
-                  ? `${running} agent${running > 1 ? "s" : ""} working`
-                  : "Ready when you are"}
-              </small>
-            </div>
-          </div>
-          <div className="team-agents">
-            {data.agents.map((a) => (
-              <button
-                key={a.id}
-                className={`agent-pill ${agentFilter === a.id ? "selected" : ""}`}
-                onClick={() =>
-                  setAgentFilter(agentFilter === a.id ? "all" : a.id)
-                }
-              >
-                <AgentIcon id={a.id} small />
-                <span>
-                  {names[a.id]}
-                  {a.id === "claude" && (
-                    <small className="optional-agent">optional</small>
-                  )}
-                </span>
-                <span
-                  className={`live-dot ${a.auth === "verified" ? "on" : ""}`}
-                />
-              </button>
-            ))}
-            {upcomingAgents.map((agent) => <UpcomingAgent key={agent.id} agent={agent} />)}
-          </div>
-          <button className="text-button" onClick={() => setModal("settings")}>
-            Manage team <ArrowUpRight size={14} />
-          </button>
-        </section>
         <div className="viewbar">
           <div className="view-tab">
             <LayoutGrid size={15} /> Board <span>{allCards.length}</span>
@@ -394,6 +407,13 @@ export default function App() {
             Shared context. Clear ownership.
           </div>
           <div className="view-actions">
+            <button
+              className="primary compact"
+              onClick={() => setModal(project ? "new" : "project")}
+            >
+              <Plus size={14} />
+              {project ? "New issue" : "Connect repository"}
+            </button>
             {project && (
               <button
                 className={`secondary compact autopilot-toggle ${automation?.enabled ? "active" : ""}`}
@@ -407,16 +427,37 @@ export default function App() {
               <Search size={14} />
               <input
                 id="search"
+                aria-label="Search issues"
                 placeholder="Search issues…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <kbd>⌘ K</kbd>
+              {search ? (
+                <button
+                  className="search-clear"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    setSearch("");
+                    document.getElementById("search")?.focus();
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              ) : (
+                <kbd>⌘ K</kbd>
+              )}
             </label>
-            <select className={`agent-filter ${agentFilter !== "all" ? "filtered" : ""}`} aria-label="Filter by agent" value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
+            <Select
+              className={`agent-filter ${agentFilter !== "all" ? "filtered" : ""}`}
+              aria-label="Filter by agent"
+              value={agentFilter}
+              onChange={(e) => setAgentFilter(e.target.value)}
+            >
               <option value="all">All agents</option>
-              <option value="codex">Codex</option><option value="grok">Grok Build</option><option value="claude">Claude Code</option>
-            </select>
+              <option value="codex">Codex</option>
+              <option value="grok">Grok Build</option>
+              <option value="claude">Claude Code</option>
+            </Select>
             <button
               className="secondary compact"
               onClick={() => setModal(project ? "import" : "project")}
@@ -523,10 +564,6 @@ export default function App() {
                           )}
                         </div>
                         <h3>{c.title}</h3>
-                        <p>
-                          {c.description.slice(0, 105) ||
-                            "Add context and acceptance criteria."}
-                        </p>
                         {c.stage === "Running" && (
                           <div className="running-line">
                             <Loader2 className="spin" size={12} />
@@ -550,12 +587,6 @@ export default function App() {
                             <span>
                               <Github size={10} />
                               GitHub
-                            </span>
-                          )}
-                          {c.sources.length > 0 && (
-                            <span className="research-tag">
-                              <Link2 size={10} />
-                              {c.sources.length} sources
                             </span>
                           )}
                           {c.dependencies.length > 0 && (
@@ -679,13 +710,19 @@ export default function App() {
         </footer>
       </main>
       {card && (
-        <aside className="detail">
+        <DetailPanel focused={focused}>
           <header className="detail-top">
             <span>
               <StatusIcon stage={card.stage} /> CL-
               {String(card.number).padStart(3, "0")}
             </span>
             <div>
+              <button
+                className="secondary compact"
+                onClick={() => setFocused(!focused)}
+              >
+                {focused ? "Back to board" : "Expand"}
+              </button>
               {card.issueUrl && (
                 <button
                   className="icon-button"
@@ -728,10 +765,29 @@ export default function App() {
               </span>
             </div>
           </div>
-          <div className="detail-tabs">
+          <div
+            className="detail-tabs"
+            role="tablist"
+            aria-label="Issue details"
+          >
             {["Overview", "Activity", "Changes", "Publish"].map((t) => (
               <button
                 key={t}
+                role="tab"
+                aria-selected={tab === t}
+                tabIndex={tab === t ? 0 : -1}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    const tabs = ["Overview", "Activity", "Changes", "Publish"];
+                    const n =
+                      (tabs.indexOf(t) + (e.key === "ArrowRight" ? 1 : 3)) % 4;
+                    setTab(tabs[n]);
+                    (
+                      e.currentTarget.parentElement?.children[n] as HTMLElement
+                    )?.focus();
+                  }
+                }}
                 className={tab === t ? "active" : ""}
                 onClick={() => setTab(t)}
               >
@@ -742,13 +798,33 @@ export default function App() {
               </button>
             ))}
           </div>
-          <div className="detail-body">
+          <div
+            className="detail-body"
+            ref={bodyRef}
+            onScroll={(e) => {
+              const n = e.currentTarget;
+              followLogs.current =
+                n.scrollHeight - n.scrollTop - n.clientHeight < 60;
+            }}
+          >
             {tab === "Overview" && (
               <>
                 <label className="field-label">Description</label>
-                <p className="description-text">
-                  {card.description || "No description yet."}
-                </p>
+                {card.description.length > 700 ? (
+                  <>
+                    <p className="description-text">
+                      {card.description.slice(0, 400)}…
+                    </p>
+                    <details key={card.id}>
+                      <summary>Read full context</summary>
+                      <p className="description-text">{card.description}</p>
+                    </details>
+                  </>
+                ) : (
+                  <p className="description-text">
+                    {card.description || "No description yet."}
+                  </p>
+                )}
                 <label className="field-label">Acceptance criteria</label>
                 <p className="acceptance-box">
                   <Check size={14} />
@@ -836,47 +912,6 @@ export default function App() {
                     })}
                   </>
                 )}
-                {card.sources.length > 0 && (
-                  <>
-                    <label className="field-label">Research · Parallel</label>
-                    {card.sources.map((s, i) => (
-                      <button
-                        className="source"
-                        key={i}
-                        onClick={() => link(s.url)}
-                      >
-                        <span className="source-number">{i + 1}</span>
-                        <div>
-                          <strong>{s.title}</strong>
-                          <small>{new URL(s.url).hostname}</small>
-                          <p>{s.excerpts[0]?.slice(0, 200)}</p>
-                        </div>
-                        <ArrowUpRight size={14} />
-                      </button>
-                    ))}
-                  </>
-                )}
-                {card.worktree && (
-                  <div className="branch-info">
-                    <GitBranch size={14} />
-                    <div>
-                      <strong>{card.branch}</strong>
-                      <small>{card.worktree}</small>
-                    </div>
-                  </div>
-                )}
-                <label className="field-label">Feedback for the next run</label>
-                <textarea
-                  key={`${card.id}-${card.updatedAt}`}
-                  defaultValue={card.feedback}
-                  placeholder="What should your teammate adjust?"
-                  rows={3}
-                  onBlur={(e) => {
-                    if (e.target.value !== card.feedback)
-                      void saveCard({ feedback: e.target.value });
-                  }}
-                  disabled={card.stage === "Running"}
-                />
                 {latest && (
                   <>
                     <label className="field-label">
@@ -891,6 +926,62 @@ export default function App() {
                     </pre>
                   </>
                 )}
+                {card.sources.length > 0 && (
+                  <>
+                    <details>
+                      <summary>
+                        Research · Parallel · {card.sources.length} sources
+                      </summary>
+                      {card.sources.map((s, i) => (
+                        <button
+                          className="source"
+                          key={i}
+                          onClick={() => link(s.url)}
+                        >
+                          <span className="source-number">{i + 1}</span>
+                          <div>
+                            <strong>{s.title}</strong>
+                            <small>{new URL(s.url).hostname}</small>
+                            <p>{s.excerpts[0]?.slice(0, 200)}</p>
+                          </div>
+                          <ArrowUpRight size={14} />
+                        </button>
+                      ))}
+                    </details>
+                  </>
+                )}
+                {card.worktree && (
+                  <details>
+                    <summary>Branch & workspace</summary>
+                    <div className="branch-info">
+                      <GitBranch size={14} />
+                      <div>
+                        <strong>{card.branch}</strong>
+                        <small>{card.worktree}</small>
+                      </div>
+                    </div>
+                  </details>
+                )}
+                <label className="field-label">Feedback for the next run</label>
+                {card.stage === "Review" && (
+                  <button
+                    className="secondary compact"
+                    disabled={busy("run")}
+                    onClick={() => void startCard(card)}
+                  >
+                    Re-run with feedback
+                  </button>
+                )}
+                <textarea
+                  value={edits.drafts[card.id]?.feedback ?? card.feedback}
+                  onChange={(e) =>
+                    edits.edit(card.id, { feedback: e.target.value })
+                  }
+                  placeholder="What should your teammate adjust?"
+                  rows={3}
+                  onBlur={() => void act("save", () => edits.flush(card.id))}
+                  disabled={card.stage === "Running"}
+                />
               </>
             )}
             {tab === "Activity" && (
@@ -899,6 +990,32 @@ export default function App() {
                   <Activity size={14} />
                   <strong>Execution timeline</strong>
                   <span>{runs.length} runs</span>
+                </div>
+                <div className="log-filters">
+                  <Select
+                    aria-label="Execution run"
+                    value={runFilter}
+                    onChange={(e) => setRunFilter(e.target.value)}
+                  >
+                    <option value="all">All runs</option>
+                    {runs.map((r, i) => (
+                      <option key={r.id} value={r.id}>
+                        Run {i + 1} · {r.status}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select
+                    aria-label="Event type"
+                    value={eventFilter}
+                    onChange={(e) => setEventFilter(e.target.value)}
+                  >
+                    <option value="all">All events</option>
+                    {[...new Set(events.map((e) => e.type))].map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
                 {events.length === 0 ? (
                   <div className="empty-detail">
@@ -910,22 +1027,28 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="timeline">
-                    {events.map((e) => (
-                      <div className={`timeline-event ${e.type}`} key={e.id}>
-                        <span className="timeline-dot" />
-                        <div className="event-heading">
-                          <strong>{e.type}</strong>
-                          <time>
-                            {new Date(e.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            })}
-                          </time>
+                    {events
+                      .filter(
+                        (e) =>
+                          (runFilter === "all" || e.runId === runFilter) &&
+                          (eventFilter === "all" || e.type === eventFilter),
+                      )
+                      .map((e) => (
+                        <div className={`timeline-event ${e.type}`} key={e.id}>
+                          <span className="timeline-dot" />
+                          <div className="event-heading">
+                            <strong>{e.type}</strong>
+                            <time>
+                              {new Date(e.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                              })}
+                            </time>
+                          </div>
+                          <pre>{e.text}</pre>
                         </div>
-                        <pre>{e.text}</pre>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </>
@@ -938,19 +1061,61 @@ export default function App() {
                   <button
                     className="text-button"
                     onClick={() =>
-                      void act("diff", async () =>
-                        setDiff(await rpc<string>("diff", { id: card.id })),
-                      )
+                      void act("diff", async () => {
+                        setDiffState("loading");
+                        try {
+                          setDiff(await rpc<string>("diff", { id: card.id }));
+                          setDiffState("ready");
+                        } catch (e) {
+                          setDiffState("failed");
+                          throw e;
+                        }
+                      })
                     }
                   >
                     Refresh
                   </button>
                 </div>
-                {diff ? (
-                  <pre className="diff">
+                <div className="diff-tools">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={wrapDiff}
+                      onChange={(e) => setWrapDiff(e.target.checked)}
+                    />{" "}
+                    Wrap lines
+                  </label>
+                  <Select
+                    aria-label="Jump to changed file"
+                    value=""
+                    onChange={(e) =>
+                      document
+                        .getElementById(`diff-line-${e.target.value}`)
+                        ?.scrollIntoView({ block: "start" })
+                    }
+                  >
+                    <option value="">Jump to file…</option>
+                    {diff.split("\n").flatMap((line, i) =>
+                      line.startsWith("diff --git ")
+                        ? [
+                            <option key={i} value={String(i)}>
+                              {line.split(" b/").at(-1)}
+                            </option>,
+                          ]
+                        : [],
+                    )}
+                  </Select>
+                </div>
+                {diffState === "loading" ? (
+                  <p role="status">Loading changes…</p>
+                ) : diffState === "failed" ? (
+                  <p role="alert">Could not load changes. Refresh to retry.</p>
+                ) : diff ? (
+                  <pre className={`diff ${wrapDiff ? "wrap" : ""}`}>
                     {diff.split("\n").map((line, i) => (
                       <div
                         key={i}
+                        id={`diff-line-${i}`}
                         className={
                           line.startsWith("+")
                             ? "added"
@@ -991,9 +1156,10 @@ export default function App() {
                   className="secondary compact"
                   disabled={busy("draft")}
                   onClick={() =>
-                    void act("draft", () =>
-                      rpc("draftComment", { id: card.id }),
-                    )
+                    void act("draft", async () => {
+                      await edits.flush(card.id);
+                      return rpc("draftComment", { id: card.id });
+                    })
                   }
                 >
                   <MessageSquare size={14} />
@@ -1002,14 +1168,15 @@ export default function App() {
                 <label className="field-label">GitHub comment · editable</label>
                 <textarea
                   className="comment-editor"
-                  key={`${card.id}-${card.commentDraft}`}
-                  defaultValue={card.commentDraft}
+                  value={
+                    edits.drafts[card.id]?.commentDraft ?? card.commentDraft
+                  }
+                  onChange={(e) =>
+                    edits.edit(card.id, { commentDraft: e.target.value })
+                  }
                   rows={13}
                   placeholder="Generate a report or write your own…"
-                  onBlur={(e) => {
-                    if (e.target.value !== card.commentDraft)
-                      void saveCard({ commentDraft: e.target.value });
-                  }}
+                  onBlur={() => void act("save", () => edits.flush(card.id))}
                 />
                 {!card.issueUrl && (
                   <p className="muted">
@@ -1028,20 +1195,34 @@ export default function App() {
                 ) : (
                   <button
                     className="primary full"
+                    title={
+                      card.stage !== "Review"
+                        ? "Complete a run before publishing"
+                        : !card.issueUrl
+                          ? "Link a GitHub issue first"
+                          : !(
+                                edits.drafts[card.id]?.commentDraft ??
+                                card.commentDraft
+                              )
+                            ? "Write or generate a report first"
+                            : "Approve this report and post it to GitHub"
+                    }
                     disabled={
                       card.stage !== "Review" ||
                       !card.issueUrl ||
-                      !card.commentDraft ||
-                      busy("publish") ||
-                      busy("save")
+                      !(
+                        edits.drafts[card.id]?.commentDraft ?? card.commentDraft
+                      ) ||
+                      busy("publish")
                     }
                     onClick={() =>
-                      void act("publish", () =>
-                        rpc("publish", {
-                          id: card.id,
-                          body: card.commentDraft,
-                        }),
-                      )
+                      void act("publish", async () => {
+                        const body =
+                          edits.drafts[card.id]?.commentDraft ??
+                          card.commentDraft;
+                        await edits.flush(card.id);
+                        return rpc("publish", { id: card.id, body });
+                      })
                     }
                   >
                     {busy("publish") ? (
@@ -1053,6 +1234,19 @@ export default function App() {
                   </button>
                 )}
               </>
+            )}
+          </div>
+          <div className="save-status" role="status">
+            {edits.status[card.id] ||
+              (Object.keys(edits.drafts[card.id] || {}).length
+                ? "Unsaved changes"
+                : "All changes saved")}
+            {edits.status[card.id]?.startsWith("Save failed") && (
+              <button
+                onClick={() => void act("save", () => edits.flush(card.id))}
+              >
+                Retry save
+              </button>
             )}
           </div>
           <footer className="detail-footer">
@@ -1085,17 +1279,30 @@ export default function App() {
                     : "Runs only when you say so"}
                 </span>
                 <button
-                  className="primary"
-                  disabled={busy("run") || busy("save")}
-                  onClick={() => void startCard(card)}
+                  className={tab === "Publish" ? "secondary" : "primary"}
+                  title={
+                    busy("save")
+                      ? "Wait for changes to save"
+                      : "Review or execute this issue"
+                  }
+                  disabled={busy("run")}
+                  onClick={() =>
+                    card.stage === "Review"
+                      ? setTab(tab === "Changes" ? "Publish" : "Changes")
+                      : void startCard(card)
+                  }
                 >
                   <Play size={14} />
-                  {card.stage === "Review" ? "Run again" : "Run agent"}
+                  {card.stage === "Review"
+                    ? tab === "Changes"
+                      ? "Review report"
+                      : "Review changes"
+                    : "Run agent"}
                 </button>
               </>
             )}
           </footer>
-        </aside>
+        </DetailPanel>
       )}
       {modal === "autopilot" && automation && (
         <AutopilotPanel
@@ -1237,7 +1444,7 @@ export default function App() {
                       )
                     }
                   />
-                  <select
+                  <Select
                     value={p.agent}
                     onChange={(e) =>
                       setProposal((prev) =>
@@ -1254,7 +1461,7 @@ export default function App() {
                         {name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             ))}
