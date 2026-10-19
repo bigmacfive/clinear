@@ -550,3 +550,53 @@ input[type="checkbox"]:disabled {
 .modal-scroll .settings-footnote {
   white-space: normal;
 }
+
+/* Respond to the space left by resizable panels, not just window width. */
+.main { container: workspace / inline-size; }
+.viewbar { height: auto; min-height: 66px; align-items: center; }
+.view-tab { height: 34px; flex-shrink: 0; }
+.view-actions { min-width: 0; }
+.view-actions > button, .view-actions > .custom-select { flex-shrink: 0; }
+.view-actions .agent-filter { height: auto; }
+.statusbar { white-space: nowrap; gap: 12px; }
+.statusbar > span { min-width: 0; flex-shrink: 0; }
+.topbar > :first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+@container workspace (max-width: 960px) {
+  .viewbar { align-items: stretch; gap: 10px; }
+  .view-tab { align-self: flex-start; }
+  .view-actions { width: 100%; margin-left: 0; }
+  .statusbar > span:nth-child(2) { display: none; }
+}
+@container workspace (max-width: 760px) {
+  .viewbar { padding: 12px 16px; }
+  .view-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .view-actions .search-box { grid-row: 1; grid-column: 1 / 3; min-width: 0; }
+  .view-actions .search-box input { width: 100%; flex: 1; min-width: 0; }
+  .view-actions .agent-filter { grid-row: 1; grid-column: 3; }
+  .view-actions > button { justify-content: center; }
+  .topbar { padding: 0 16px; gap: 10px; }
+  .local-chip { display: none; }
+  .statusbar { padding: 0 16px; }
+}
+.column { min-width: 0; border-radius: 10px; border: 1px solid transparent; padding: 8px; }
+.board { gap: 8px; padding: 12px 16px; }
+.issue-card[data-draggable="true"] { cursor: grab; }
+.issue-card[data-draggable="true"]:active { cursor: grabbing; }
+.issue-card.drag-source { opacity: .35; }
+.is-dragging .column { transition: background .12s, border-color .12s; }
+.is-dragging .column.drop-available { border: 1px dashed #bea0ef55; background: #bea0ef05; }
+.is-dragging .column.drop-available.drop-over { border-color: #bea0ef; background: #bea0ef14; box-shadow: inset 0 0 0 1px #bea0ef40; }
+.drop-hint { padding: 10px; margin-bottom: 10px; border-radius: 6px; background: #ffffff05; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+.drop-available .drop-hint { color: #d7c4f3; }
+.board-wrap { overscroll-behavior: contain; }
+@media (min-width: 1280px) {
+  .detail:not(.focused) { max-width: calc(100vw - var(--sidebar-width, 225px) - 380px); }
+}
+@container workspace (max-width: 440px) {
+  .view-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .view-actions .search-box { grid-column: 1 / -1; }
+  .view-actions .agent-filter { grid-row: auto; grid-column: auto; max-width: none; }
+  .statusbar > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+}
+
+.issue-card[data-draggable="true"] { touch-action: none; user-select: none; }

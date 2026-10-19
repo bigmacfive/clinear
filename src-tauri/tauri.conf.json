@@ -19,7 +19,8 @@
         "minHeight": 680,
         "backgroundColor": "#131416",
         "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "hiddenTitle": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {
@@ -28,7 +29,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app"],
+    "targets": [
+      "app"
+    ],
     "resources": {
       "resources/engine/": "engine/"
     },

@@ -1,3 +1,4 @@
+import { useBoardDrag, dropReason } from "./useBoardDrag";
 import { useCardDrafts } from "./useCardDrafts";
 import { SettingsModal } from "./SettingsModal";
 import { DetailPanel, ResizeHandle, useStoredWidth, Select } from "./Controls";
@@ -86,6 +87,12 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const selectedRef = useRef(selected);
   const pendingRef = useRef(new Set<string>());
+  const drag = useBoardDrag((id, stage) => {
+    void act("move", async () => {
+      await rpc("updateCard", { id, patch: { stage } });
+      setNotice(`Issue moved to ${stage}`);
+    });
+  });
   selectedRef.current = selected;
   useEffect(() => {
     setSelected("");
@@ -479,7 +486,7 @@ export default function App() {
           </div>
         )}
         {notice && (
-          <div className="alert">
+          <div className="alert" role="status">
             <span>{notice}</span>
             <button
               className="icon-button"
@@ -506,25 +513,13 @@ export default function App() {
             </button>
           </div>
         )}
-        <div className="board-wrap">
+        <div className={`board-wrap ${drag.dragged ? "is-dragging" : ""}`} ref={drag.boardRef}>
           <div className="board">
             {stages.map((stage) => (
               <section
-                className={`column ${stage.toLowerCase()}`}
+                className={`column ${stage.toLowerCase()} ${drag.dragged && !dropReason(drag.dragged.stage, stage) ? "drop-available" : ""} ${drag.over === stage ? "drop-over" : ""}`}
                 key={stage}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const id = e.dataTransfer.getData("text/plain");
-                  if (id && !["Running", "Done"].includes(stage))
-                    void act("move", () =>
-                      rpc("updateCard", { id, patch: { stage } }),
-                    );
-                  else if (id)
-                    setNotice(
-                      "Use Run to start an agent, or Approve & publish to finish a reviewed issue.",
-                    );
-                }}
+                data-stage={stage}
               >
                 <div className="column-heading">
                   <span className="stage-icon">
@@ -542,17 +537,19 @@ export default function App() {
                     <Plus size={15} />
                   </button>
                 </div>
+                {drag.dragged && <div className="drop-hint">
+                  {dropReason(drag.dragged.stage, stage) || `Drop to move to ${stage}`}
+                </div>}
                 <div className="column-cards">
                   {cards
                     .filter((c) => c.stage === stage)
                     .map((c) => (
                       <button
                         key={c.id}
-                        draggable={c.stage !== "Running"}
-                        onDragStart={(e) =>
-                          e.dataTransfer.setData("text/plain", c.id)
-                        }
-                        className={`issue-card ${selected === c.id ? "chosen" : ""}`}
+                        draggable={false}
+                        data-draggable={desktop && c.stage !== "Running" && !busy("move")}
+                        onPointerDown={(e) => { if (desktop && c.stage !== "Running" && !busy("move")) drag.start(e, c); }}
+                        className={`issue-card ${selected === c.id ? "chosen" : ""} ${drag.dragged?.id === c.id ? "drag-source" : ""}`}
                         onClick={() => select(c)}
                       >
                         <div className="issue-meta">

@@ -40,3 +40,13 @@ Connections now provides live Parallel and Composio checks. Parallel searches of
 - Cline API: real `@cline/agents` call using `anthropic/claude-sonnet-5.5` completed and returned the requested JSON. Key is held only in the local 0600 secrets file. Parallel public MCP was verified earlier; Composio OAuth remains pending.
 - Final restart check exposed a stalled proto Node shim. The macOS launcher now prefers installed Node executables under `.local/bin` / `.hermes/node/bin` and system locations before the proto shim; `CLINEAR_NODE` remains the explicit override.
 - Restart recovery confirmed after adding an engine-local package manifest and installing the bundle at `~/Applications/Clinear.app`: native window reports “Local engine connected” and restores all 4 cards. Desktop shortcut points to this installed copy. Temporary bridge tracing was removed.
+
+## Board drag and constrained workspace follow-up
+
+- Replaced fixed toolbar height with intrinsic sizing and main-container breakpoints; footer compacts when the detail panel consumes board width.
+- Added source feedback, permitted-column highlights, explanatory restricted targets, and animation-frame edge scrolling. Running/Done remain explicit execution/publication actions.
+- Card movement uses pointer capture with a 6px threshold, Escape/cancel handling, and click suppression after dragging; native HTML dragging proved unreliable in the macOS verification session. Tauri file-drop interception is disabled.
+- `npm test`: 21 tests pass, including board transition-policy tests. `npm run bundle`: TypeScript, Vite, engine packaging and release Rust compilation pass.
+- Native visual check with a 600px detail panel confirms toolbar/column headers no longer overlap and footer no longer wraps.
+- Final installed native app: dragged CL-003 Backlog → Ready, attempted Ready → Running (no move/no execution), then restored Ready → Backlog. Click after dragging did not open a detail panel; ordinary card click still opened it.
+- Final screenshot: `artifacts/board-responsive-fixed.png`. Full viewport matrix and sustained edge-scroll speed have not been manually measured.
