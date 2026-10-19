@@ -38,7 +38,7 @@ This is **intentional demo data**, not a real incident. The starting `npm test` 
 2. Open the card and click **Research**. Show the actual Parallel references.
 3. Click **Plan with Cline**. Edit the proposed tasks, then accept them. This creates cards; it does not start workers.
 4. Start **Codex implementation**, then its testing task. In manual mode each execution requires Run. Alternatively, explicitly start **Autopilot** to authorize a bounded batch: Cline checks readiness and the scheduler dispatches eligible work in dependency order.
-5. Start **Grok review** against the same worktree.
+5. Start **Grok review** against the same worktree. The backend supplies its actual diff and recorded implementation/test command output. Grok evaluates this evidence with no tools; it does not claim an independent test execution.
 6. Inspect **Activity**, **Changes**, and the reported test results. Ask for changes with feedback and Run again if needed.
 7. Under **Publish**, generate and edit a report. **Approve & publish** creates a GitHub issue comment and reads it back before marking the card Done. Code stays local; no PR, push, or merge is performed by the workboard.
 
@@ -48,7 +48,7 @@ If an agent, research call, or account connection fails, the app shows the failu
 
 Open **Autopilot** on a project and describe the service goal. Enable **Discovery loop**, choose a research interval (15 minutes to one week), and save. While Clinear is open, Parallel finds sources and Cline compares opportunities against the README, package manifest, and existing backlog. Each scan adds at most three ideas with source links, a reason to build them, and acceptance criteria; near-duplicate titles are filtered. **Research now** runs the same flow immediately.
 
-Discovery and execution are independent switches. **Start autopilot** explicitly authorizes a batch of 1–20 worker runs, including reviews. Cline checks each task, Codex implements/tests, and Grok reviews completed implementation. One worker runs at a time. Ambiguous tasks are blocked with a question; failures pause execution. Results stop in Review and GitHub publication still requires **Approve & publish**. Pause stops new dispatch and cancels the current worker. Execution pauses after restart; discovery schedules resume while the app is open without replaying every missed interval.
+Discovery and execution are independent switches. **Start autopilot** explicitly authorizes a batch of 1–20 worker runs, including reviews. Cline checks each task, Codex implements/tests, and Grok reviews the actual diff and recorded test evidence without executing tools. One worker runs at a time. Ambiguous tasks are blocked with a question; failures pause execution. Results stop in Review and GitHub publication still requires **Approve & publish**. Pause stops new dispatch and cancels the current worker. Execution pauses after restart; discovery schedules resume while the app is open without replaying every missed interval.
 
 ## Implementation
 

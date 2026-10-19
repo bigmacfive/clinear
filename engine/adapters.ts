@@ -39,6 +39,7 @@ export function argsFor(
   prompt: string,
   cwd: string,
   probe = false,
+  reviewOnly = false,
 ): string[] {
   if (id === "claude")
     return [
@@ -76,7 +77,7 @@ export function argsFor(
     "streaming-json",
     "--permission-mode",
     "dontAsk",
-    ...(probe
+    ...(probe || reviewOnly
       ? ["--tools", ""]
       : [
           "--tools",
@@ -84,17 +85,25 @@ export function argsFor(
           "--rules",
           "This local workboard task uses only the supplied repository and local built-in tools. Do not invoke external memory, MCP services, web search, or publishing tools. If unavailable tools are required, report BLOCKED: and stop.",
           "--allow",
-          "read_file",
+          "Read",
           "--allow",
-          "list_dir",
+          "Grep",
           "--allow",
-          "grep",
+          "Edit",
           "--allow",
-          "search_replace",
+          "Bash(git *)",
           "--allow",
-          "write",
+          "Bash(npm test*)",
           "--allow",
-          "run_terminal_command",
+          "Bash(node --test*)",
+          "--allow", "Bash(echo *)",
+          "--allow", "Bash(pwd)",
+          "--allow", "Bash(ls *)",
+          "--allow", "Bash(cat *)",
+          "--allow", "Bash(rg *)",
+          "--deny", "Bash(git push*)",
+          "--deny", "Bash(git reset*)",
+          "--deny", "Bash(git clean*)",
         ]),
     "--no-subagents",
   ];
@@ -204,6 +213,7 @@ export function start(
   onLine: (line: string) => void,
   onErr: (line: string) => void,
   probe = false,
+  reviewOnly = false,
 ): ChildProcess {
   const env = { ...process.env };
   // App integration keys must not override each CLI's existing signed-in account.
@@ -214,7 +224,7 @@ export function start(
     "PARALLEL_API_KEY",
   ])
     delete env[key];
-  const child = spawn(path, argsFor(id, prompt, cwd, probe), {
+  const child = spawn(path, argsFor(id, prompt, cwd, probe, reviewOnly), {
     cwd,
     env,
     detached: true,

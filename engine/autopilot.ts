@@ -277,9 +277,9 @@ export class Autopilot {
         const review = await this.s.dispatch("createCard", {
           projectId: card.projectId,
           title: `Review: ${card.title}`,
-          description: `Review the implementation for CL-${card.number}. Inspect the actual diff and run relevant tests. Do not modify code. Report actionable findings, or clearly state that no findings were found.\n\nImplementation report:\n${run.summary.slice(-12000)}`,
+          description: `Review the implementation for CL-${card.number}. Review the supplied actual diff and recorded implementation test output. Do not execute tools or modify code. Report actionable findings, or clearly state that no findings were found.\n\nImplementation report:\n${run.summary.slice(-12000)}`,
           acceptance:
-            "Review the diff, verify tests, and identify unresolved issues. Use BLOCKED: if changes are required.",
+            "Review the supplied diff and test evidence, and identify unresolved issues. Use BLOCKED: if changes are required.",
           agent: "grok",
           dependencies: [card.id],
           issueUrl: card.issueUrl,

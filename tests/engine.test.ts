@@ -73,6 +73,9 @@ test("parsers preserve final output and report structured provider errors", () =
   assert.equal(normalize("grok", '{"type":"end","stopReason":"cancelled"}')[0].failure, true);
 });
 test("commands pass literal prompt arguments without shell interpolation", () => {
+  const reviewArgs = argsFor("grok", "Review supplied evidence", "/tmp/repo", false, true);
+  assert.equal(reviewArgs[reviewArgs.indexOf("--tools") + 1], "");
+  assert.ok(!reviewArgs.includes("--allow"));
   const prompt = "$(touch /tmp/not-allowed); `echo danger`";
   for (const id of ["claude", "codex", "grok"] as const) {
     assert.ok(argsFor(id, prompt, "/tmp/repo").includes(prompt));

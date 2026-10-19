@@ -13,7 +13,10 @@
 - Parallel anonymous Search MCP returned actual sources. A real discovery scan added two Clinear improvement cards with linked references; six-hour discovery was saved in the desktop app.
 - GitHub issue #1 in `bigmacfive/clinear-dispatch-demo` was imported using the explicitly selected GitHub CLI fallback.
 - Autopilot blocked a card that included external publishing in its scope. After clarifying the local coding scope, it dispatched Codex, which reproduced the failing test and produced a fix with 4 passing tests. The original checkout remains unchanged; changes are in a Clinear worktree.
-- Grok's first review was interrupted by an unavailable personal MCP tool. Its exit-zero `cancelled` event exposed a parser issue, now fixed and covered by a regression assertion. The original run record was corrected to failed with an audit event. The adapter now exposes only local built-in tools.
+- Grok's first review was interrupted by an unavailable personal MCP tool. Its exit-zero `cancelled` event exposed a parser issue, now fixed and covered by a regression assertion. The original run record was corrected to failed with an audit event. The adapter now uses documented permission-rule names. Peer review has been narrowed to a tool-free evidence review: the backend supplies the actual diff and recorded implementation command logs. Grok then completed a real review with “No findings,” correctly describing the initial failing test, the fix, 4 passing tests, and clean whitespace checks. It did not independently execute tests.
+
+- Independently reran the demo worktree tests outside the agent: 4 passed, 0 failed; `git diff --check` passed.
+- Visually verified the final ObsidianUI-inspired purple theme in the packaged native app, original LobeHub SVGs, and disabled Hermes/OpenClaw/Kimi entries. Screenshot: `artifacts/clinear-obsidian-board.png` (local artifact).
 
 ## Limits
 
