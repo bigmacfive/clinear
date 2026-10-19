@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build && npm run build:engine",
-    "build:engine": "esbuild engine/main.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-engine/main.mjs && esbuild engine/main.ts --bundle --platform=node --format=esm --packages=external --outfile=src-tauri/resources/engine/main.mjs",
+    "build:engine": "esbuild engine/main.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-engine/main.mjs && esbuild engine/main.ts --bundle --platform=node --format=esm --packages=external --outfile=src-tauri/resources/engine/main.mjs && node scripts/engine-package.mjs",
     "tauri": "tauri",
     "desktop": "tauri dev",
     "test": "tsx --test tests/*.test.ts",
