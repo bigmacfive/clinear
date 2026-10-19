@@ -28,9 +28,10 @@ Clinear turns a GitHub issue into reviewed work—with your local AI team.<br />
 
 A small bug can mean a browser full of research, several agent terminals, a test log, and a GitHub update. Clinear brings that handoff into **one card**: the goal, evidence, plan, assigned agent, live activity, diff, feedback, and approved report stay together.
 
-The name combines **Cline**, the planning engine, with the focused issue-tracking experience that inspired **Linear**. Clinear is an independent open-source project, not an official Linear integration.
+The name combines **Cline**, the planning and knowledge-work engine, with the focused issue-tracking experience that inspired **Linear**. Clinear is an independent open-source project, not an official Linear integration.
 
 - **Delegate a clear outcome.** Cline proposes tasks, acceptance criteria, dependencies, and a suitable agent. Edit the plan before accepting it.
+- **Match the model to the task.** Assign a research synthesis, analysis, or document draft to the Cline SDK worker and choose a model ID per card. Its actual written deliverable stays with the execution record.
 - **Work with the tools on your Mac.** Codex implements and tests in a Git worktree. Grok reviews the resulting diff and recorded evidence. Claude Code is optional.
 - **Review results in context.** Inspect sources, execution history, changes, and test output without reconstructing the conversation across tools.
 - **Choose what happens next.** Run individual tasks or authorize a bounded Autopilot batch. Publication always requires an explicit approval.
@@ -40,7 +41,7 @@ The name combines **Cline**, the planning engine, with the focused issue-trackin
 
 | Integration | What it contributes to Clinear | What you can inspect |
 | --- | --- | --- |
-| **Cline SDK** | Turns issue context into structured plans, checks task readiness, and proposes new work from research. Configurable model/provider support lets planning use Cline-hosted inference, Anthropic, or the local Codex adapter. | Editable tasks, acceptance criteria, dependencies, readiness questions, and discovery rationale. |
+| **Cline SDK** | Plans tasks, checks readiness, discovers opportunities, and executes knowledge-work cards with a per-card model ID. Configurable providers include Cline-hosted inference, Anthropic, and the local Codex adapter. | Editable plans, readiness questions, discovery rationale, and completed analysis or document drafts. |
 | **Parallel** | Finds supporting documentation and research for the current issue or the next backlog opportunity. | Source URLs and excerpts attached to the work. |
 | **Composio** | Connects your GitHub account, imports issues, publishes approved reports, and reads comments back to verify delivery. | The original issue, the outgoing draft, and the resulting GitHub comment. |
 
@@ -100,6 +101,12 @@ This is **intentional demo data**, not a real incident. The starting `npm test` 
 7. Under **Publish**, generate and edit a report. **Approve & publish** creates a GitHub issue comment and reads it back before marking the card Done. Code stays local; no PR, push, or merge is performed by the workboard.
 
 If an agent, research call, or account connection fails, the app shows the failure. Missing services are never simulated. The local sample alone does not demonstrate GitHub publication until a real issue URL and connection are supplied.
+
+## Knowledge work with Cline
+
+Choose **Cline** as a card's agent for research synthesis, analysis, or a document draft. Set the card's model ID, or leave it empty to use the configured default. Supply the goal and context, then Run; the SDK returns a real Markdown deliverable for review. Hosted calls were verified with `anthropic/claude-haiku-4.5` and `anthropic/claude-sonnet-5.5`.
+
+This worker reasons over the supplied context and attached sources. It has no shell, file-write, or test tools; it does not independently browse. Use Parallel to gather sources and Codex for implementation and test execution. Requests requiring unavailable tools are blocked rather than reported as completed.
 
 ## Autopilot and recurring discovery
 

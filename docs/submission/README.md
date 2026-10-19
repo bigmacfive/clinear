@@ -8,7 +8,7 @@ For solo developers who currently copy context between research tools, coding ag
 
 **Cline + Linear = Clinear:** an agentic kanban that brings human direction, local AI execution, and verifiable outcomes into one work queue.
 
-Cline provides configurable model-backed planning, readiness checks, and backlog synthesis. Parallel supplies research with inspectable sources. Composio connects the GitHub issue and approved result. Clinear's scheduler coordinates the local workers; it does not attribute CLI dispatch or execution budgets to Cline.
+Cline provides configurable model-backed planning, readiness checks, backlog synthesis, and a knowledge-work agent with a per-card model ID. The latter returns analysis or document drafts from supplied context; it has no shell, file-write, browsing, or test tools. Actual hosted calls were verified with `anthropic/claude-haiku-4.5` and `anthropic/claude-sonnet-5.5`. These worker checks are separate from the GitHub bug-fix demo. Parallel supplies research with inspectable sources. Composio connects the GitHub issue and approved result. Clinear's scheduler coordinates the local workers; it does not attribute CLI dispatch or execution budgets to Cline.
 
 ## Evidence at a glance
 
