@@ -67,6 +67,10 @@ test("parsers preserve final output and report structured provider errors", () =
     true,
   );
   assert.equal(normalize("claude", "partial non JSON")[0].type, "log");
+  assert.equal(normalize("codex", '{"type":"item.completed","item":{"type":"error","message":"Ignored config option"}}')[0].type, "warning");
+  assert.equal(normalize("codex", '{"type":"turn.completed"}')[0].type, "system");
+  assert.deepEqual(normalize("grok", '{"type":"thought","data":"internal"}'), []);
+  assert.equal(normalize("grok", '{"type":"end","stopReason":"cancelled"}')[0].failure, true);
 });
 test("commands pass literal prompt arguments without shell interpolation", () => {
   const prompt = "$(touch /tmp/not-allowed); `echo danger`";

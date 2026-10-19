@@ -40,7 +40,7 @@ import {
   type RunEvent,
   type Proposal,
 } from "./types";
-import { names, AgentIcon, StatusIcon, Modal } from "./ui";
+import { names, AgentIcon, StatusIcon, Modal, upcomingAgents, UpcomingAgent } from "./ui";
 import { ProjectModal, IssueModal, ImportModal, SettingsModal } from "./Forms";
 export default function App() {
   const [data, setData] = useState<Snapshot>(blank);
@@ -58,7 +58,9 @@ export default function App() {
   const [proposal, setProposal] = useState<Proposal[]>([]);
   const [connected, setConnected] = useState(false);
   const selectedRef = useRef(selected);
+  const pendingRef = useRef(new Set<string>());
   selectedRef.current = selected;
+  useEffect(() => { setSelected(""); setAgentFilter("all"); setSearch(""); }, [projectId]);
   const update = (s: Snapshot) => {
     setData(s);
     setConnected(true);
@@ -137,7 +139,8 @@ export default function App() {
     key: string,
     fn: () => Promise<T>,
   ): Promise<T | undefined> {
-    if (pending.includes(key)) return;
+    if (pendingRef.current.has(key)) return;
+    pendingRef.current.add(key);
     setError("");
     setPending((v) => [...v, key]);
     try {
@@ -146,6 +149,7 @@ export default function App() {
       setError(String(e instanceof Error ? e.message : e));
       return undefined;
     } finally {
+      pendingRef.current.delete(key);
       setPending((v) => v.filter((x) => x !== key));
     }
   }
@@ -214,7 +218,7 @@ export default function App() {
             <span className={`live-dot ${running ? "on" : ""}`} />
           </button>
           <button className="nav-item" onClick={() => setModal("settings")}>
-            <Users size={16} /> Your team <span className="nav-count">3</span>
+            <Users size={16} /> Your team <span className="nav-count">6</span>
           </button>
         </nav>
         <div className="sidebar-section">
@@ -269,6 +273,8 @@ export default function App() {
             />
           </button>
         ))}
+        <div className="upcoming-nav-label">Coming soon</div>
+        {upcomingAgents.map((agent) => <UpcomingAgent key={agent.id} agent={agent} variant="nav" />)}
         <div className="sidebar-bottom">
           <div className="local-box">
             <span className={`live-dot ${connected ? "on" : ""}`} />
@@ -374,6 +380,7 @@ export default function App() {
                 />
               </button>
             ))}
+            {upcomingAgents.map((agent) => <UpcomingAgent key={agent.id} agent={agent} />)}
           </div>
           <button className="text-button" onClick={() => setModal("settings")}>
             Manage team <ArrowUpRight size={14} />
@@ -406,23 +413,10 @@ export default function App() {
               />
               <kbd>⌘ K</kbd>
             </label>
-            <button
-              className={`secondary compact ${agentFilter !== "all" ? "filtered" : ""}`}
-              onClick={() =>
-                setAgentFilter(
-                  agentFilter === "all"
-                    ? "claude"
-                    : agentFilter === "claude"
-                      ? "codex"
-                      : agentFilter === "codex"
-                        ? "grok"
-                        : "all",
-                )
-              }
-            >
-              <ListFilter size={14} />
-              {agentFilter === "all" ? "Filter" : names[agentFilter as AgentId]}
-            </button>
+            <select className={`agent-filter ${agentFilter !== "all" ? "filtered" : ""}`} aria-label="Filter by agent" value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
+              <option value="all">All agents</option>
+              <option value="codex">Codex</option><option value="grok">Grok Build</option><option value="claude">Claude Code</option>
+            </select>
             <button
               className="secondary compact"
               onClick={() => setModal(project ? "import" : "project")}

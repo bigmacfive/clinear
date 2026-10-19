@@ -79,6 +79,10 @@ export function argsFor(
     ...(probe
       ? ["--tools", ""]
       : [
+          "--tools",
+          "read_file,list_dir,grep,search_replace,write,run_terminal_command",
+          "--rules",
+          "This local workboard task uses only the supplied repository and local built-in tools. Do not invoke external memory, MCP services, web search, or publishing tools. If unavailable tools are required, report BLOCKED: and stop.",
           "--allow",
           "read_file",
           "--allow",
@@ -112,14 +116,17 @@ export function normalize(id: AgentId, line: string): Normalized[] {
     return [{ type: "delta", text: e.data }];
   if (id === "grok" && e.type === "available_commands") return [];
   if (id === "grok" && e.type === "usage") return [];
+  if (id === "grok" && e.type === "thought") return [];
   if (id === "grok" && e.type === "end")
     return [
       {
         type: "system",
         text: `Grok finished: ${e.stopReason || "complete"}`,
-        failure: e.stopReason === "error",
+        failure: ["error", "cancelled", "canceled", "max_turns", "max_tokens"].includes(e.stopReason),
       },
     ];
+  if (id === "grok" && ["tool_call", "tool_call_update"].includes(e.type))
+    return [{ type: "tool", text: [e.title || e.toolName || e.toolCallId, e.status, e.rawInput && JSON.stringify(e.rawInput), ...(e.content || []).map((c: any) => c.content?.text || "")].filter(Boolean).join("\n").slice(-16000) }];
   if (e.type === "result")
     return [
       {
@@ -141,13 +148,15 @@ export function normalize(id: AgentId, line: string): Normalized[] {
     return [
       {
         type:
-          i.type === "command_execution"
+          i.type === "error"
+            ? "warning"
+            : i.type === "command_execution"
             ? "command"
             : i.type === "file_change"
               ? "file"
               : "message",
         text:
-          i.text ||
+          i.text || i.message ||
           [
             i.command,
             i.aggregated_output,
@@ -184,7 +193,7 @@ export function normalize(id: AgentId, line: string): Normalized[] {
       },
     ];
   if (e.type === "turn.completed")
-    return [{ type: "result", text: "Agent turn completed." }];
+    return [{ type: "system", text: "Agent turn completed." }];
   return [{ type: "event", text: JSON.stringify(e).slice(0, 12000) }];
 }
 export function start(

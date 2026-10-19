@@ -11,7 +11,7 @@ import {
   ArrowUpRight,
   Check,
 } from "lucide-react";
-import { Modal, AgentIcon, names } from "./ui";
+import { Modal, AgentIcon, names, upcomingAgents, UpcomingAgent } from "./ui";
 import { desktop } from "./api";
 import type { Card, AgentId, Snapshot } from "./types";
 export function ProjectModal({
@@ -335,6 +335,8 @@ export function SettingsModal({
             </button>
           </div>
         ))}
+        <div className="upcoming-settings-title">More teammates, soon <span>Not yet available</span></div>
+        {upcomingAgents.map((agent) => <UpcomingAgent key={agent.id} agent={agent} variant="connection" />)}
         <div className="settings-section-title integrations-title">
           <Link2 size={16} />
           <div>
@@ -371,6 +373,7 @@ export function SettingsModal({
           <div className="integration-row" key={i.name}>
             <div>
               <strong>
+                {i.name === "Cline" && <AgentIcon id="cline" small />}
                 {i.name}
                 <span className={`live-dot ${i.ready ? "on" : ""}`} />
               </strong>

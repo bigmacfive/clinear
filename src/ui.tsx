@@ -1,28 +1,34 @@
 import { type ReactNode } from "react";
-import { CircleCheck, Loader2, CircleDashed, Circle, X } from "lucide-react";
+import { CircleCheck, Loader2, CircleDashed, Circle, X, LockKeyhole } from "lucide-react";
 import type { AgentId, Stage } from "./types";
 export const names: Record<AgentId, string> = {
   claude: "Claude Code",
   codex: "Codex",
   grok: "Grok Build",
 };
-const initials: Record<AgentId, string> = {
-  claude: "✳",
-  codex: "⌘",
-  grok: "𝕏",
-};
+export const upcomingAgents = [
+  { id: "hermes", name: "Hermes", detail: "A learning teammate for your local workflow." },
+  { id: "openclaw", name: "OpenClaw", detail: "Your personal agent, connected to the board." },
+  { id: "kimi", name: "Kimi", detail: "Another coding teammate. One shared workspace." },
+] as const;
+type BrandId = AgentId | typeof upcomingAgents[number]["id"] | "cline" | "github";
+const logos: Record<BrandId, string> = { claude: "claudecode-color", codex: "codex", grok: "grok", hermes: "hermesagent", openclaw: "openclaw-color", kimi: "kimi-color", cline: "cline", github: "github" };
 export function AgentIcon({
   id,
   small = false,
 }: {
-  id: AgentId;
+  id: BrandId;
   small?: boolean;
 }) {
   return (
     <span className={`agent-icon ${id} ${small ? "small" : ""}`}>
-      {initials[id]}
+      <img src={`/brands/${logos[id]}.svg`} className={logos[id].endsWith("-color") ? "brand-color" : "brand-mono"} alt="" aria-hidden="true" />
     </span>
   );
+}
+export function UpcomingAgent({ agent, variant = "pill" }: { agent: typeof upcomingAgents[number]; variant?: "pill" | "nav" | "connection" }) {
+  if (variant === "connection") return <div className="connection-row upcoming-connection"><AgentIcon id={agent.id} /><div className="connection-main"><strong>{agent.name}<span className="coming-badge"><LockKeyhole size={10} />Coming soon</span></strong><small>{agent.detail}</small></div><button className="secondary compact" disabled aria-label={`${agent.name} connection unavailable`}>Unavailable</button></div>;
+  return <button disabled className={`${variant === "nav" ? "agent-nav" : "agent-pill"} upcoming-agent`} title={`${agent.name} · Coming soon. Not connected or executable.`}><AgentIcon id={agent.id} small /><span>{agent.name}{variant === "nav" && <small className="optional-agent">coming soon</small>}</span><LockKeyhole size={11} aria-label="Unavailable" /></button>;
 }
 export function StatusIcon({ stage }: { stage: Stage }) {
   return stage === "Done" ? (

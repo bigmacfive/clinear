@@ -89,3 +89,7 @@ Cline SDK provider dependencies currently include upstream audit advisories in u
 ## Open source
 
 MIT. The workboard, adapters, approval flow, and persistence are Clinear code. Cline, Parallel, Composio, Tauri, and the local CLIs are upstream products with their own licenses and account requirements. Hosted research/model/auth services are not self-hosted by this repository.
+
+## Visual credits
+
+The dark material treatment is inspired by [ObsidianUI](https://www.obsidianui.dev/), adapted to a dense purple-accented desktop workboard. Brand SVGs are original assets from [LobeHub Icons](https://github.com/lobehub/lobe-icons), pinned to commit `8a1b2821bb768c484fe8da20c5e1838b6bf551a9`; their MIT license is included in `public/brands/LICENSE`. Hermes, OpenClaw, and Kimi are visibly locked previews, not working integrations.

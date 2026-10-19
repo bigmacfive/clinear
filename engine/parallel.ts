@@ -18,6 +18,7 @@ export async function anonymousSearch(
         name: "web_search",
         arguments: {
           objective: `Find current primary documentation directly relevant to the technical problem or product opportunity below. Use the full context, including language and runtime; avoid unrelated products with similar task titles.\n${objective}`.slice(0, 12000),
+          search_queries: [objective.replace(/\s+/g, " ").slice(0, 500)],
           session_id: sessionId,
         },
       },
