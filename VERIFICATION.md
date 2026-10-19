@@ -60,3 +60,11 @@ Connections now provides live Parallel and Composio checks. Parallel searches of
 - TypeScript and all 21 tests pass.
 - Removed the successful-move banner on user request; failed RPCs still surface through the existing error handler.
 - Release bundle compiled successfully. In the updated native app, the board reflected a user-driven CL-002 move from Review to Ready. Sustained drag frame rate has not been benchmarked.
+
+## Persistent card ordering and insertion preview
+
+- `moveCard` atomically saves destination-column ranks in SQLite. Existing unranked cards retain creation order; new cards append after ranked cards.
+- Same-column reorder is allowed in all stages. Cross-column moves continue to reject entering Running/Done or moving an active operation.
+- Pointer hit testing selects the next visible card by its vertical midpoint; an overlay line marks insertion without shifting card layout. Filtering preserves hidden cards and uses the visible next card as the insertion anchor.
+- TypeScript and 22 tests pass, including same-column reorder, cross-column insertion, stale anchor rejection without partial writes, persisted ordering read from a reopened store, and execution-state guards.
+- Release macOS bundle built and installed. Native app reconnected successfully. Additional same-column mouse verification was not completed because the user was actively changing the board and editing Connections; their interaction was left undisturbed.

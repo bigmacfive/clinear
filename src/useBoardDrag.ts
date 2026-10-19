@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import type { Card, Stage } from "./types";
 
 export function dropReason(source: Stage, target: Stage): string {
+  if (source === target) return "";
   if (source === "Running") return "Cancel the running task before moving it";
-  if (source === target) return "Already in this column";
   if (target === "Running") return "Open the issue and use Run to start an agent";
   if (target === "Done") return "Review and publish the result to complete this issue";
   return "";
 }
 
-export function useBoardDrag(move: (id: string, stage: Stage) => void) {
+export function useBoardDrag(move: (id: string, stage: Stage, beforeId: string | null) => void) {
   const boardRef = useRef<HTMLDivElement>(null);
   const [dragged, setDragged] = useState<Card | null>(null);
   const [over, setOver] = useState<Stage | null>(null);
@@ -25,6 +25,8 @@ export function useBoardDrag(move: (id: string, stage: Stage) => void) {
       const position = { ...origin };
       let active = false;
       let target: Stage | null = null;
+      let beforeId: string | null = null;
+      let marker: HTMLElement | null = null;
       let frame = 0;
       let previous = performance.now();
       let ghost: HTMLElement | null = null;
@@ -42,8 +44,30 @@ export function useBoardDrag(move: (id: string, stage: Stage) => void) {
           target = next;
           setOver(next);
         }
-        if (hint) hint.textContent = next ? dropReason(card.stage, next) || `Move to ${next}` : "Release to cancel";
-        ghost?.classList.toggle("invalid-drop", !next || !!dropReason(card.stage, next));
+        const allowed = next && !dropReason(card.stage, next);
+        beforeId = null;
+        if (allowed && column && marker) {
+          const siblings = Array.from(column.querySelectorAll<HTMLElement>("[data-card-id]"))
+            .filter(item => item.dataset.cardId !== card.id);
+          const before = siblings.find(item => {
+            const rect = item.getBoundingClientRect();
+            return position.y < rect.top + rect.height / 2;
+          });
+          beforeId = before?.dataset.cardId || null;
+          const list = column.querySelector<HTMLElement>(".column-cards")!;
+          const rect = list.getBoundingClientRect();
+          const last = siblings.at(-1)?.getBoundingClientRect();
+          const y = before ? before.getBoundingClientRect().top - 5 : last ? last.bottom + 5 : rect.top;
+          const board = boardRef.current!.getBoundingClientRect();
+          const left = Math.max(rect.left, board.left);
+          const right = Math.min(rect.right, board.right);
+          marker.hidden = y < board.top || y > board.bottom || right <= left;
+          marker.style.width = `${Math.max(0, right - left)}px`;
+          marker.style.transform = `translate3d(${left}px, ${y}px, 0)`;
+        } else if (marker) marker.hidden = true;
+        if (hint) hint.textContent = next ? dropReason(card.stage, next) || (next === card.stage ? "Reorder in " : "Move to ") + next : "Release to cancel";
+        ghost?.classList.toggle("invalid-drop", !allowed);
+
       };
       const tick = (now: number) => {
         const elapsed = Math.min(now - previous, 40);
@@ -86,7 +110,11 @@ export function useBoardDrag(move: (id: string, stage: Stage) => void) {
           hint = document.createElement("span");
           hint.className = "drag-preview-hint";
           ghost.append(hint);
-          document.body.append(ghost);
+          marker = document.createElement("div");
+          marker.className = "board-insertion-marker";
+          marker.setAttribute("aria-hidden", "true");
+          marker.hidden = true;
+          document.body.append(ghost, marker);
           document.body.classList.add("board-drag-active");
           setDragged(card);
           previous = performance.now();
@@ -100,10 +128,11 @@ export function useBoardDrag(move: (id: string, stage: Stage) => void) {
           const suppress = (click: MouseEvent) => { click.preventDefault(); click.stopPropagation(); };
           window.addEventListener("click", suppress, { capture: true, once: true });
           setTimeout(() => window.removeEventListener("click", suppress, true), 0);
-          if (event?.type === "pointerup" && target && !dropReason(card.stage, target)) move(card.id, target);
+          if (event?.type === "pointerup" && target && !dropReason(card.stage, target)) move(card.id, target, beforeId);
         }
         cancelAnimationFrame(frame);
         ghost?.remove();
+        marker?.remove();
         document.body.classList.remove("board-drag-active");
         if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId);
         setDragged(null);

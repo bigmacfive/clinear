@@ -306,3 +306,37 @@ test("Composio verification never falls back to gh and validates identity", asyn
     await assert.rejects(f.service.dispatch("verifyIntegration", { provider: "composio" }));
   } finally { f.close(); }
 });
+
+test("board reorder persists, supports cross-column insertion, and validates destinations atomically", async () => {
+  const { service, dir, close } = fixture();
+  const { compareBoardCards } = await import('../src/boardOrder.js');
+  const { Store } = await import('../engine/store.js');
+  try {
+    const project = await service.dispatch('setupSample');
+    const a = await service.dispatch('createCard', { projectId: project.id, title: 'Order A' }) as Card;
+    const b = await service.dispatch('createCard', { projectId: project.id, title: 'Order B' }) as Card;
+    const c = await service.dispatch('createCard', { projectId: project.id, title: 'Order C' }) as Card;
+    const ids = () => service.snapshot().cards.filter(item => item.stage === 'Backlog').sort(compareBoardCards).map(item => item.id);
+    await service.dispatch('moveCard', { id: c.id, stage: 'Backlog', beforeId: a.id });
+    assert.ok(ids().indexOf(c.id) < ids().indexOf(a.id));
+    await service.dispatch('moveCard', { id: c.id, stage: 'Backlog', beforeId: null });
+    assert.equal(ids().at(-1), c.id);
+    await service.dispatch('moveCard', { id: b.id, stage: 'Ready', beforeId: null });
+    await service.dispatch('moveCard', { id: b.id, stage: 'Backlog', beforeId: a.id });
+    assert.ok(ids().indexOf(b.id) < ids().indexOf(a.id));
+    const before = service.snapshot().cards;
+    await assert.rejects(service.dispatch('moveCard', { id: a.id, stage: 'Backlog', beforeId: 'stale-card' }), /destination changed/);
+    await assert.rejects(service.dispatch('moveCard', { id: a.id, stage: 'Running', beforeId: null }), /Use Run/);
+    await assert.rejects(service.dispatch('moveCard', { id: a.id, stage: 'Done', beforeId: null }), /Use Run/);
+    assert.deepEqual(service.snapshot().cards, before);
+    // Reopen the on-disk store independently to verify ordering is durable.
+    const reopened = new Store(service.store.db.name);
+    try {
+      assert.deepEqual(reopened.all<Card>('card').filter(item => item.stage === 'Backlog').sort(compareBoardCards).map(item => item.id), ids());
+    } finally { reopened.close(); }
+    service.store.put('card', { ...service.card(a.id), stage: 'Running' });
+    await service.dispatch('moveCard', { id: a.id, stage: 'Running', beforeId: null });
+    assert.equal(service.card(a.id).stage, 'Running');
+    await assert.rejects(service.dispatch('moveCard', { id: a.id, stage: 'Ready', beforeId: null }), /Stop the active/);
+  } finally { close(); }
+});

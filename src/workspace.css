@@ -634,3 +634,28 @@ body.board-drag-active, body.board-drag-active * { cursor: grabbing !important; 
   .issue-card.drag-preview { rotate: -1deg; transition: none; }
   .is-dragging .column { transition: none; }
 }
+
+.board-insertion-marker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 3px;
+  z-index: 9999;
+  background: #cfb1ff;
+  box-shadow: 0 0 0 1px #21162e, 0 0 12px #b286ef66;
+  pointer-events: none;
+  will-change: transform;
+}
+.board-insertion-marker::before,
+.board-insertion-marker::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cfb1ff;
+}
+.board-insertion-marker::before { left: 0; }
+.board-insertion-marker::after { right: 0; }

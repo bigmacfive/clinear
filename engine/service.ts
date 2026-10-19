@@ -1,3 +1,4 @@
+import { compareBoardCards } from "../src/boardOrder.js";
 import { Autopilot } from "./autopilot.js";
 import { randomUUID } from "node:crypto";
 import {
@@ -291,6 +292,30 @@ export class Service {
           updatedAt: now(),
         };
         return this.save(c);
+      }
+      case "moveCard": {
+        const input = z.object({
+          id: z.string(), stage: z.enum(stages), beforeId: z.string().nullable(),
+        }).parse(params);
+        const c = this.card(input.id);
+        const changingStage = c.stage !== input.stage;
+        if (changingStage && (c.stage === "Running" || this.busy.has(c.id) || this.publishing.has(c.id)))
+          throw Error("Stop the active operation before moving this issue.");
+        if (changingStage && (input.stage === "Running" || input.stage === "Done"))
+          throw Error("Use Run or Approve & publish to change this state.");
+        const ordered = this.store.all<Card>("card")
+          .filter(item => item.projectId === c.projectId && item.stage === input.stage && item.id !== c.id)
+          .sort(compareBoardCards);
+        const index = input.beforeId === null ? ordered.length : ordered.findIndex(item => item.id === input.beforeId);
+        if (index < 0) throw Error("The destination changed. Try moving the issue again.");
+        ordered.splice(index, 0, { ...c, stage: input.stage });
+        this.store.db.transaction(() => {
+          ordered.forEach((item, boardOrder) => this.store.put("card", {
+            ...item, boardOrder, ...(item.id === c.id ? { updatedAt: now() } : {}),
+          }));
+        })();
+        this.changed();
+        return this.card(c.id);
       }
       case "updateCard": {
         const c = this.card(params.id);

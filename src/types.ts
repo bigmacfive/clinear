@@ -29,6 +29,7 @@ export interface Card {
   description: string;
   acceptance: string;
   stage: Stage;
+  boardOrder?: number;
   flag: Flag;
   agent: AgentId;
   owner: string;

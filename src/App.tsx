@@ -1,3 +1,4 @@
+import { compareBoardCards } from "./boardOrder";
 import { useBoardDrag, dropReason } from "./useBoardDrag";
 import { useCardDrafts } from "./useCardDrafts";
 import { SettingsModal } from "./SettingsModal";
@@ -87,9 +88,9 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const selectedRef = useRef(selected);
   const pendingRef = useRef(new Set<string>());
-  const drag = useBoardDrag((id, stage) => {
+  const drag = useBoardDrag((id, stage, beforeId) => {
     void act("move", async () => {
-      await rpc("updateCard", { id, patch: { stage } });
+      await rpc("moveCard", { id, stage, beforeId });
     });
   });
   selectedRef.current = selected;
@@ -210,7 +211,7 @@ export default function App() {
   const busy = (key: string) => pending.includes(key);
   const automation = data.automations.find((a) => a.projectId === projectId);
   const project = data.projects.find((p) => p.id === projectId);
-  const allCards = data.cards.filter((c) => c.projectId === projectId);
+  const allCards = data.cards.filter((c) => c.projectId === projectId).sort(compareBoardCards);
   const cards = allCards.filter(
     (c) =>
       (agentFilter === "all" || c.agent === agentFilter) &&
@@ -542,9 +543,10 @@ export default function App() {
                     .map((c) => (
                       <button
                         key={c.id}
+                        data-card-id={c.id}
                         draggable={false}
-                        data-draggable={desktop && c.stage !== "Running" && !busy("move")}
-                        onPointerDown={(e) => { if (desktop && c.stage !== "Running" && !busy("move")) drag.start(e, c); }}
+                        data-draggable={desktop && !busy("move")}
+                        onPointerDown={(e) => { if (desktop && !busy("move")) drag.start(e, c); }}
                         className={`issue-card ${selected === c.id ? "chosen" : ""} ${drag.dragged?.id === c.id ? "drag-source" : ""}`}
                         onClick={() => select(c)}
                       >
