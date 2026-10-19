@@ -4,6 +4,11 @@
 
 ### Your local AI team. One shared work queue.
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-a78bfa)](LICENSE)
+![Platform: macOS](https://img.shields.io/badge/platform-macOS-25232d)
+![Built with Tauri 2](https://img.shields.io/badge/desktop-Tauri_2-25232d)
+![Local first](https://img.shields.io/badge/workspace-local_first-25232d)
+
 **Cline + Linear → an agentic kanban for solo developers.**
 
 Clinear turns a GitHub issue into reviewed work—with your local AI team.<br />
@@ -140,7 +145,7 @@ Cline SDK provider dependencies currently include upstream audit advisories in u
 
 ## Open source
 
-MIT. The workboard, adapters, approval flow, and persistence are Clinear code. Cline, Parallel, Composio, Tauri, and the local CLIs are upstream products with their own licenses and account requirements. Hosted research/model/auth services are not self-hosted by this repository.
+**[MIT licensed](LICENSE). Contributions are welcome—start with [CONTRIBUTING.md](CONTRIBUTING.md).** The workboard, adapters, approval flow, and persistence are Clinear code. Cline, Parallel, Composio, Tauri, and the local CLIs are upstream products with their own licenses and account requirements. Hosted research/model/auth services are not self-hosted by this repository.
 
 ## Visual credits
 
