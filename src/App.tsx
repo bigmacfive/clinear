@@ -463,6 +463,7 @@ export default function App() {
               <option value="all">All agents</option>
               <option value="codex">Codex</option>
               <option value="grok">Grok Build</option>
+              <option value="cline">Cline</option>
               <option value="claude">Claude Code</option>
             </Select>
             <button

@@ -2,7 +2,7 @@ import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { accessSync, constants } from "node:fs";
 import { homedir } from "node:os";
 import type { AgentId, AgentStatus } from "../src/types.js";
-export const agentIds: AgentId[] = ["claude", "codex", "grok"];
+export const agentIds: Exclude<AgentId, "cline">[] = ["claude", "codex", "grok"];
 export function detect(id: AgentId, override = ""): AgentStatus {
   const candidates = [
     override,

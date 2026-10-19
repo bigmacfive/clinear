@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { AgentId, Stage } from "./types";
 export const names: Record<AgentId, string> = {
+  cline: "Cline",
   claude: "Claude Code",
   codex: "Codex",
   grok: "Grok Build",

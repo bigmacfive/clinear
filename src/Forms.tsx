@@ -106,7 +106,8 @@ export function IssueModal({
     description: card?.description || "",
     acceptance: card?.acceptance || "",
     owner: card?.owner || "You",
-    agent: card?.agent || "codex",
+    agent: card?.agent || "cline",
+    clineModel: card?.clineModel || "",
     issueUrl: card?.issueUrl || "",
     dependencies: card?.dependencies || [],
   });
@@ -162,6 +163,11 @@ export function IssueModal({
             />
           </div>
         </div>
+        {v.agent === "cline" && <>
+          <label className="field-label">Cline model · optional</label>
+          <input value={v.clineModel} placeholder="Use the model configured in Connections" onChange={e => setV({ ...v, clineModel: e.target.value })} />
+          <p className="muted">Research, analysis and document drafts. Code edits and test execution belong to Codex.</p>
+        </>}
         <label className="field-label">GitHub issue URL · optional</label>
         <input
           type="url"

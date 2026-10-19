@@ -363,3 +363,37 @@ test('Parallel keyed search sends the required keyword query and parses sources'
     close();
   }
 });
+
+test("Cline knowledge work persists its model result without spawning a CLI or creating a worktree", async () => {
+  const { service, close } = fixture();
+  try {
+    const p = await service.dispatch("setupSample");
+    const c = await service.dispatch("createCard", {projectId:p.id,title:"Draft a release summary",agent:"cline",clineModel:"test/model"});
+    let usedModel = "";
+    service.integrations.generate = async (_system, _input, options) => { usedModel = options?.model || ""; return {status:"completed",summary:"Draft ready for human review."}; };
+    await service.dispatch("run", {id:c.id});
+    await waitFor(() => !service.active.size);
+    assert.equal(usedModel,"test/model");
+    assert.equal(service.card(c.id).stage,"Review");
+    assert.equal(service.card(c.id).worktree,"");
+    assert.equal(service.store.all<Run>("run").at(-1)?.summary,"Draft ready for human review.");
+  } finally { close(); }
+});
+test("Cline cancellation and blocked requests never become success", async () => {
+  const { service, close } = fixture();
+  try {
+    const p = await service.dispatch("setupSample");
+    const c = await service.dispatch("createCard", {projectId:p.id,title:"Analyze requirements",agent:"cline"});
+    service.integrations.generate = (_system,_input,options) => new Promise((_resolve,reject) => { options?.signal?.addEventListener("abort",()=>reject(Error("cancelled")),{once:true}); });
+    await service.dispatch("run",{id:c.id});
+    await assert.rejects(service.dispatch("run",{id:c.id}),/cannot be started/);
+    await service.dispatch("cancel",{id:c.id});
+    await waitFor(()=>!service.active.size);
+    assert.equal(service.store.all<Run>("run").at(-1)?.status,"cancelled");
+    service.integrations.generate = async()=>({status:"blocked",summary:"Code changes require Codex."});
+    await service.dispatch("run",{id:c.id});
+    await waitFor(()=>!service.active.size);
+    assert.equal(service.card(c.id).flag,"blocked");
+    assert.equal(service.card(c.id).stage,"Ready");
+  } finally { close(); }
+});

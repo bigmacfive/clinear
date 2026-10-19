@@ -94,7 +94,8 @@ export function SettingsModal({
                 </strong>
                 <input
                   aria-label={`${names[a.id]} executable`}
-                  value={paths[`${a.id}Path`]}
+                  value={a.id === "cline" ? "Configured under Research & planning" : paths[`${a.id}Path`]}
+                  disabled={a.id === "cline"}
                   onChange={(e) =>
                     setPaths({ ...paths, [`${a.id}Path`]: e.target.value })
                   }

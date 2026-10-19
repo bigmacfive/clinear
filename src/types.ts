@@ -6,7 +6,7 @@ export const stages = [
   "Done",
 ] as const;
 export type Stage = (typeof stages)[number];
-export type AgentId = "claude" | "codex" | "grok";
+export type AgentId = "claude" | "codex" | "grok" | "cline";
 export type Flag = "" | "blocked" | "failed" | "interrupted";
 export interface Project {
   id: string;
@@ -32,6 +32,7 @@ export interface Card {
   boardOrder?: number;
   flag: Flag;
   agent: AgentId;
+  clineModel?: string;
   owner: string;
   dependencies: string[];
   issueUrl: string;
