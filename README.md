@@ -1,8 +1,54 @@
+<div align="center">
+
 # Clinear
 
-**Human direction. Agent execution.** A local-first Tauri workboard for people and coding agents.
+### Your local AI team. One shared work queue.
 
-Clinear turns a GitHub issue into a shared work plan, research sources, isolated local execution, reviewable changes, and a verified GitHub report. It uses the **Cline SDK** for planning, **Parallel** for research, and **Composio** for authenticated GitHub access. An explicitly selected GitHub CLI fallback supports demos before Composio is connected.
+**Cline + Linear → an agentic kanban for solo developers.**
+
+Clinear turns a GitHub issue into reviewed work—with your local AI team.<br />
+**You direct the work. Agents execute. You decide what ships.**
+
+[See the demo](#demo-an-urgent-task-runs-last) · [Run locally](#run-on-macos) · [Submission evidence](docs/submission/README.md) · [MIT license](LICENSE)
+
+</div>
+
+---
+
+## Less context copying. More finished work.
+
+A small bug can mean a browser full of research, several agent terminals, a test log, and a GitHub update. Clinear brings that handoff into **one card**: the goal, evidence, plan, assigned agent, live activity, diff, feedback, and approved report stay together.
+
+The name combines **Cline**, the planning engine, with the focused issue-tracking experience that inspired **Linear**. Clinear is an independent open-source project, not an official Linear integration.
+
+- **Delegate a clear outcome.** Cline proposes tasks, acceptance criteria, dependencies, and a suitable agent. Edit the plan before accepting it.
+- **Work with the tools on your Mac.** Codex implements and tests in a Git worktree. Grok reviews the resulting diff and recorded evidence. Claude Code is optional.
+- **Review results in context.** Inspect sources, execution history, changes, and test output without reconstructing the conversation across tools.
+- **Choose what happens next.** Run individual tasks or authorize a bounded Autopilot batch. Publication always requires an explicit approval.
+- **Discover the next useful task.** Optional recurring research adds source-backed proposals to the backlog while the app is open.
+
+## Three integrations, distinct jobs
+
+| Integration | What it contributes to Clinear | What you can inspect |
+| --- | --- | --- |
+| **Cline SDK** | Turns issue context into structured plans, checks task readiness, and proposes new work from research. Configurable model/provider support lets planning use Cline-hosted inference, Anthropic, or the local Codex adapter. | Editable tasks, acceptance criteria, dependencies, readiness questions, and discovery rationale. |
+| **Parallel** | Finds supporting documentation and research for the current issue or the next backlog opportunity. | Source URLs and excerpts attached to the work. |
+| **Composio** | Connects your GitHub account, imports issues, publishes approved reports, and reads comments back to verify delivery. | The original issue, the outgoing draft, and the resulting GitHub comment. |
+
+Cline handles reasoning; **Clinear's scheduler** handles dependency order, execution budgets, worktree locks, and local CLI dispatch. Configurable providers do not mean multiple models run simultaneously or that every upstream Cline feature is exposed by this MVP.
+
+```mermaid
+flowchart LR
+    A[GitHub issue<br/>Composio] --> B[Research<br/>Parallel]
+    B --> C[Plan<br/>Cline SDK]
+    C --> D[Human approval]
+    D --> E[Implement + test<br/>Local Codex]
+    E --> F[Evidence review<br/>Grok]
+    F --> G[Human review + approval]
+    G --> H[Verified GitHub report<br/>Composio]
+```
+
+**Backlog → Ready → Running → Review → Done.** Moving a card does not start an agent. Successful execution stops in Review; an approved, verified publication completes the issue workflow. The code remains on a local branch—Clinear does not create or merge a pull request.
 
 ## Run on macOS
 
@@ -28,11 +74,11 @@ Keys can be set through `.env` during development or through the desktop setting
 
 ## Demo: an urgent task runs last
 
-Public fixture: https://github.com/bigmacfive/clinear-dispatch-demo
+[Public sample repository](https://github.com/bigmacfive/clinear-dispatch-demo) · [Bug report](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1) · [Submission run and provenance](docs/submission/README.md)
 
-Issue: https://github.com/bigmacfive/clinear-dispatch-demo/issues/1
+The fresh submission run reproduced the bug, fixed priority ordering, and passed **4/4 tests** plus `git diff --check`. Grok reviewed the actual diff and recorded command output. See the submission record for the publication route and final evidence links.
 
-Verified demo report: https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6276165490
+An [earlier published report](https://github.com/bigmacfive/clinear-dispatch-demo/issues/1#issuecomment-6276165490) used the explicitly selected **GitHub CLI fallback**. It is a separate run and is **not evidence of Composio publication**.
 
 This is **intentional demo data**, not a real incident. The starting `npm test` fails because the queue picks the lowest priority.
 
