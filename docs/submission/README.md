@@ -4,6 +4,8 @@
 
 For solo developers who currently copy context between research tools, coding agents, test logs, and GitHub.
 
+[Presentation deck · PDF](https://github.com/bigmacfive/clinear/releases/download/v0.1.0-demo/Clinear-deck.pdf) · [Release assets](https://github.com/bigmacfive/clinear/releases/tag/v0.1.0-demo)
+
 ## Product in one sentence
 
 **Cline + Linear = Clinear:** an agentic kanban that brings human direction, local AI execution, and verifiable outcomes into one work queue.

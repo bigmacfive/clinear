@@ -14,7 +14,7 @@
 Clinear turns a GitHub issue into reviewed work—with your local AI team.<br />
 **You direct the work. Agents execute. You decide what ships.**
 
-[See the demo](#demo-an-urgent-task-runs-last) · [Run locally](#run-on-macos) · [Submission evidence](docs/submission/README.md) · [MIT license](LICENSE)
+[Deck · PDF](https://github.com/bigmacfive/clinear/releases/download/v0.1.0-demo/Clinear-deck.pdf) · [See the demo](#demo-an-urgent-task-runs-last) · [Run locally](#run-on-macos) · [Submission evidence](docs/submission/README.md) · [MIT license](LICENSE)
 
 </div>
 
