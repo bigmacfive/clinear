@@ -290,3 +290,19 @@ test("secrets are redacted from activity and omitted from snapshots", () => {
     close();
   }
 });
+
+test("Composio verification never falls back to gh and validates identity", async () => {
+  const f = fixture();
+  try {
+    f.service.settings.githubTransport = "gh";
+    f.service.integrations.github = async () => { throw Error("Fallback must not run"); };
+    f.service.integrations.composioGithub = async (path) => {
+      assert.equal(path, "/user");
+      return { login: "verified-user" };
+    };
+    const result = await f.service.dispatch("verifyIntegration", { provider: "composio" });
+    assert.match(result.message, /@verified-user/);
+    f.service.integrations.composioGithub = async () => ({ message: "Bad credentials" });
+    await assert.rejects(f.service.dispatch("verifyIntegration", { provider: "composio" }));
+  } finally { f.close(); }
+});

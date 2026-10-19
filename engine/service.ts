@@ -333,6 +333,8 @@ export class Service {
         return this.probe(agentSchema.parse(params.agent));
       case "settings":
         return this.updateSettings(params);
+      case "verifyIntegration":
+        return this.integrations.verify(z.enum(["parallel", "composio"]).parse(params.provider));
       case "connectGithub":
         return this.integrations.connect();
       case "importIssue": {

@@ -27,3 +27,7 @@ Composio has an implemented session/OAuth/proxy and verified-publication path, b
 Claude is optional and was not used for implementation. Hermes, OpenClaw, and Kimi are unavailable UI previews; no executable adapters are registered for them.
 
 Discovery runs only while the app is open. Worker execution pauses after restarting the app. Test results are agent reports plus inspectable command logs, not a general test certification system. Worktrees are not security sandboxes. The app is unsigned and requires an installed Node 22+ and the relevant authenticated CLIs.
+
+### Connection verification controls
+
+Connections now provides live Parallel and Composio checks. Parallel searches official Node.js test runner documentation through the configured API key or public MCP. Composio checks GitHub `/user` through its SDK proxy, even when the app's selected publishing route is the gh fallback. A unit test verifies fallback isolation and rejection of malformed account responses. Account login, project API key, and GitHub OAuth are still required for the first real Composio check; no successful Composio call is claimed yet.

@@ -12,7 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import { Modal, AgentIcon, names, upcomingAgents, UpcomingAgent } from "./ui";
-import { desktop } from "./api";
+import { desktop, rpc, openExternal } from "./api";
 import type { Card, AgentId, Snapshot } from "./types";
 export function ProjectModal({
   close,
@@ -275,6 +275,8 @@ export function SettingsModal({
     codexPath: data.agents[1]?.path || "",
     grokPath: data.agents[2]?.path || "",
   });
+  const [checking, setChecking] = useState("");
+  const [connectionResult, setConnectionResult] = useState("");
   const [secrets, setSecrets] = useState<Record<string, string>>({});
   const [model, setModel] = useState(data.settings.model);
   const [provider, setProvider] = useState(data.settings.provider);
@@ -398,6 +400,24 @@ export function SettingsModal({
             />
           </div>
         ))}
+        <div className="github-connection">
+          <button className="secondary" onClick={() => void openExternal("https://dashboard.composio.dev")}>
+            Composio account & API key <ArrowUpRight size={14} />
+          </button>
+          {(["parallel", "composio"] as const).map((id) => (
+            <button key={id} className="secondary" disabled={!desktop || !!checking || (id === "composio" && !data.integrations.composio)} onClick={async () => {
+              setChecking(id); setConnectionResult("");
+              try {
+                const result = await rpc<{ message: string }>("verifyIntegration", { provider: id });
+                setConnectionResult(result.message);
+              } catch { setConnectionResult(`${id === "parallel" ? "Parallel" : "Composio"} verification failed. Save your key and complete account authorization, then retry.`); }
+              finally { setChecking(""); }
+            }}>
+              {checking === id ? "Testing…" : `Test ${id === "parallel" ? "Parallel" : "Composio"}`}
+            </button>
+          ))}
+        </div>
+        <p className="settings-footnote" role="status">{connectionResult || "Parallel public MCP needs no key. Composio: save API key → Connect GitHub → Test Composio → select Composio route and save."}</p>
         <div className="form-grid">
           <div>
             <label className="field-label">Cline model provider</label>
